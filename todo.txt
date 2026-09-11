@@ -1,0 +1,263 @@
+Техническое задание: Система управления Samba-шарами (NAS Manager)
+
+1. Контекст среды и архитектура
+
+Среда: LXC-контейнер на Proxmox (ZFS-датасеты проброшены как точки монтирования в /mnt/share/...). Архитектура полностью нейтральна к окружению и работает в любом Linux-дистрибутиве.
+
+Роль приложения: Абстракция над Samba. Приложение агрегирует бизнес-логику (Пользователь → Группа → Шара) в БД SQLite и синхронизирует её со встроенным реестром Samba (registry.tdb).
+
+Хранилище конфигурации Samba: Использование базы данных Registry вместо текстовых файлов.
+
+Инициализация Samba (/etc/samba/smb.conf)
+Для активации поддержки реестра файл /etc/samba/smb.conf конфигурируется один раз при развертывании системы:
+
+```toml
+[global]
+    workgroup = WORKGROUP
+    security = user
+    passdb backend = tdbsam
+    
+    # Подключение динамической конфигурации из реестра
+    include = registry
+```
+
+2. Бизнес-логика и модель доступа
+
+Связь пользователя и группы: При создании нового виртуального пользователя автоматически создается личная группа с тем же именем (is_personal = true). Пути и шары при создании юзера не назначаются — они добавляются позже.
+
+Группа (Group): Агрегирует набор Шар и список Пользователей с уровнями доступа RO (Read-Only) или RW (Read-Write).
+
+Разрешение конфликтов: Если пользователь имеет доступ к одной шаре через несколько групп с разными правами, применяется принцип максимальных привилегий (RW преобладает над RO).
+
+
+3. Схема базы данных (SQLite)
+
+
+```
+
+# Виртуальные пользователи Samba
+users
+    id: uuid
+    username: str
+    password: str(hash)
+    created_at: datetime
+    is_admin: bool
+
+
+# Доступные директории (/mnt/share/...) для шаринга
+shares
+    id: uuid
+    name: str
+    path: str
+
+# Группы пользователей
+groups
+    id: uuid
+    name: str
+    is_personal: bool
+
+
+# Связь: какие шары принадлежат группе.
+group_shares:
+    group_id: uuid
+    share_id: uuid
+
+# Связь: юзер в группе (access_level IN ('RO', 'RW')).
+user_groups
+    user_id: uuid
+    group_id: uuid
+    access_level: ENUM[ro|rw]
+```
+
+4. Системное взаимодействие (ОС и Samba)
+
+4.1. Выделенный системный сервисный пользователь
+
+Все операции записи в файловую систему через Samba выполняются от имени единого сервисного аккаунта, чтобы исключить конфликты POSIX-прав.
+
+Инициализация (однократно при развертывании):
+```
+useradd -r -M -s /usr/sbin/nologin service-user
+```
+или команда в Dockerfile
+
+Все монтируемые директории в /mnt/share/* передаются во владение этому пользователю:
+
+```
+chown -R service-user:service-user /mnt/share
+```
+
+4.2. Управление виртуальными пользователями Samba
+
+При создании пользователя в веб-интерфейсе если юзер не админ (администратор приложения) бэкенд выполняет:
+Создание пользователя ОС:
+```
+useradd -M -s /usr/sbin/nologin <username>
+```
+
+Добавление в базе Samba и установка пароля:
+```
+(echo "<password>"; echo "<password>") | smbpasswd -s -a <username>
+```
+
+Создание личной группы в БД:
+
+Запись в groups (name=<username>, is_personal=true) и связь в user_groups. 
+    Из персональной группы удалить юзера нельзя
+    В персональной группе может быть только один юзер
+
+
+4.3. Применение изменений (Live Update)
+
+Применение настроек происходят автоматически и мгновенно при выполнении команд net conf. Утилита редактирует registry.tdb и рассылает IPC-уведомления запущенным процессам smbd.
+
+systemctl restart smbd — ЗАПРЕЩЕНО (рвет активные соединения).
+
+smbcontrol all reload-config — НЕ ТРЕБУЕТСЯ (реестр обновляет память демонов на лету).
+
+5. Архитектура бэкенда (Модули FastAPI)
+
+`OsManager`
+
+- Создание и удаление пользователей ОС (useradd, userdel).
+- Сканирование точек монтирования /mnt/share/\*.
+
+`SambaRegistryManager`
+- Обёртка над утилитой net conf (выполнение команд addshare, setparm, delshare, listshares).
+- Управление паролями через smbpasswd.
+
+`RegistrySyncEngine`
+- Чтение связей из SQLite (User → Group → Share + разрешение конфликтов RO/RW).
+- Расчет результирующего состояния и выполнение минимально необходимого набора команд net conf (Diff-синхронизация).
+
+`Services (User, Group, Share)`
+- CRUD-операции над сущностями БД.
+- Вызов RegistrySyncEngine.sync() после любого изменения структуры прав.
+
+`ConnectionScriptService`
+- Формирование персональных скриптов монтирования и REST-ответов для клиентов.
+
+6. Алгоритм синхронизации Registry (RegistrySyncEngine)
+
+При вызове метода sync() бэкенд выполняет следующий цикл:
+
+1. Расчет целевого состояния из SQLite
+Для каждой шары в БД рассчитываются три списка пользователей:
+valid users — все пользователи, имеющие доступ к шаре хотя бы через одну группу.
+write list — пользователи, имеющие доступ RW хотя бы в одной из групп для этой шары.
+read list — пользователи, имеющие строго RO во всех связанных группах (и ни одной RW).
+
+2. Извлечение текущего состояния реестра
+Выполняется команда net conf listshares для получения списка текущих расшаренных ресурсов в Samba.
+
+3. Применение изменений (Diff)
+Удаление устаревших шар: Если шара есть в реестре, но удалена из БД:
+
+```
+net conf delshare <share_name>
+```
+
+Создание и обновление шар: Для каждой шары из БД выполняются команды настройки:
+```
+# 1. Создание шары (если ее еще нет в реестре)
+net conf addshare <share_name> <share_path> writeable=no guest_ok=no comment="Managed by NAS Manager"
+
+# 2. Установка сопоставления прав на системного пользователя
+net conf setparm <share_name> "force user" "service-user"
+net conf setparm <share_name> "browseable" "yes"
+
+# 3. Установка списков доступа
+net conf setparm <share_name> "valid users" "user1 user2 user3"
+net conf setparm <share_name> "read list" "user1"
+net conf setparm <share_name> "write list" "user2 user3"
+```
+
+7. Дополнительный функционал
+
+REST API подключений (/api/v1/users/{username}/mount-script)
+
+Эндпоинт принимает имя пользователя и возвращает:
+JSON-список шар: Массив объектов вида [{"name": "photos", "path": "\\\\nas\\photos", "access": "RW"}].
+
+Готовые скрипты монтирования:
+Windows (PowerShell/CMD): net use Z: \\nas\photos /user:username password
+Linux (bash): mount -t cifs //nas/photos /mnt/photos -o username=username,password=password
+
+Авторизация в приложении:
+
+Авторизоваться в приложении может только админ (поле is_acmin=True).
+
+Шары могeт быть временными, нужно поле с датой истечения действия и поле is_active. Фоновые таски будут регулярно проверять дату и обновлять состояние. При отключении шары она просто не учитыватся при обновлении ragistry
+
+8. Стек технологий
+Backend Framework: Python 3.11+ / FastAPI
+Database: SQLite (SQLAlchemy 2.0)
+APScheduler для регулярных задач
+System Tools: Samba (net conf, smbpasswd), Linux CLI (useradd, chown)
+Docker+docker-compose: 
+
+9. структура файлов репозитория
+```
+root/
+    src/
+        app/
+            api/
+                routes_v1.py
+            core/
+                application.py
+                exception_handler.py
+                database.py
+                settings.py
+                exceptions.py
+                startup.py
+                scheduler.py
+            modules/
+                os_manager/
+                    models.py # модели бд
+                    services.py # бизнесс логика
+                    routes.py # fastapi роуты
+                    exceptions.py # касмтоные ошибки
+                samba_registry_manager/
+                    ...
+                registry_sync_engine/
+                    ...
+            tools/
+                zfs_tools.py
+                net_tools.py
+            tasks.py
+            main.py
+        tests/
+            ...
+        migrations/
+    deploy/
+        compose.yml
+
+```
+
+10. Процесс разроботки
+
+Вся разработка происходит из контейнера, тестовые запуски тоже там.
+Нужно запускать приложение и мопртировать в него путь ./share. Создавать папки заранее перед запуском, имитируя примонтированную zfs файловую систему.
+Монтирование делать из отдельного контейнера окторый надо запускать рядом.
+
+например, запустить контейнер
+
+```
+docker run -n client --entrypoint "sleep infinity" ubunth:24.04
+```
+и выполнять в нм команды
+
+```
+docker exec client apt install ...
+docker exec client mount ...
+docker exec client ls /mnt/share/...
+```
+11. Финал
+
+Задание считается выполненным когда будет рабочее приложение позволяющие расшаривать в сеть диреткории для юзеров с системой доступа основанной на группах. Это свои группы приложения, не системные.
+
+
+теперь надо сделать более подробный план разроаботки. в первую очередь изучи задачу и задай уточняющие вопросы.
+
+
+

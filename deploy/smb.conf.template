@@ -1,0 +1,10 @@
+[global]
+    workgroup = @WORKGROUP@
+    server string = NAS Manager
+    security = user
+    passdb backend = tdbsam
+    map to guest = never
+    log level = 1
+    log file = /var/log/samba/%m.log
+    max log size = 1024
+    include = registry

@@ -1,0 +1,42 @@
+name: nas-manager
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
+    image: nas-manager:dev
+    container_name: nas-app
+    hostname: nas
+    privileged: true
+    env_file: .env
+    volumes:
+      - ${SHARE_HOST_PATH}:${SHARE_MOUNT_PATH}
+      - ./app:/app/app
+      - ./data:/data
+      - samba-state:/var/lib/samba
+    ports:
+      - "8000:8000"
+    networks:
+      nas:
+        aliases:
+          - nas
+
+  test:
+    image: nas-manager:dev
+    profiles: ["tools"]
+    privileged: true
+    env_file: .env
+    working_dir: /app
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+    command: uv run pytest -q
+
+volumes:
+  samba-state:
+
+networks:
+  nas:
+    name: nas
