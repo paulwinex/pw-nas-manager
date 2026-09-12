@@ -13,7 +13,7 @@
       flat
       bordered
       selection="single"
-      :selected-rows="selected ? [selected.id] : []"
+      :selected="selected ? [selected] : []"
       @update:selected="onSelect"
     >
       <template v-slot:body-cell-is_personal="cell">
@@ -266,15 +266,28 @@ async function loadGroups() {
 }
 
 async function loadUsers() {
-  users.value = (await api.listUsers()).data;
+  try {
+    users.value = (await api.listUsers()).data;
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load users' });
+  }
 }
 
 async function loadShares() {
-  shares.value = (await api.listShares()).data;
+  try {
+    shares.value = (await api.listShares()).data;
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load shares' });
+  }
 }
 
 async function onSelect(rows: readonly GroupOut[]) {
   selected.value = rows[0] ?? null;
+  members.value = [];
+  groupShares.value = [];
+  memberForm.value.user_id = null;
+  memberForm.value.expires_at = null;
+  shareForm.value.share_id = null;
   if (selected.value) {
     await loadGroupDetail(selected.value.id);
   }
@@ -284,6 +297,7 @@ async function loadGroupDetail(groupId: string) {
   loadingMembers.value = true;
   try {
     const [m, s] = await Promise.all([api.listMembers(groupId), api.listGroupShares(groupId)]);
+    if (selected.value?.id !== groupId) return;
     members.value = m.data;
     groupShares.value = s.data;
   } catch (e: any) {
@@ -335,9 +349,10 @@ async function doDelete() {
 
 async function addMember() {
   if (!selected.value || !memberForm.value.user_id) return;
+  const groupId = selected.value.id;
   addingMember.value = true;
   try {
-    await api.addMember(selected.value.id, {
+    await api.addMember(groupId, {
       user_id: memberForm.value.user_id,
       access_level: memberForm.value.access_level,
       expires_at: memberForm.value.expires_at
@@ -352,25 +367,27 @@ async function addMember() {
   } finally {
     addingMember.value = false;
   }
-  await loadGroupDetail(selected.value.id);
+  await loadGroupDetail(groupId);
 }
 
 async function removeMember(member: MemberOut) {
   if (!selected.value) return;
+  const groupId = selected.value.id;
   try {
-    await api.removeMember(selected.value.id, member.user_id);
+    await api.removeMember(groupId, member.user_id);
     $q.notify({ type: 'positive', message: 'Member removed' });
   } catch (e: any) {
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to remove member' });
   }
-  await loadGroupDetail(selected.value.id);
+  await loadGroupDetail(groupId);
 }
 
 async function linkShare(shareId: string | null) {
   if (!selected.value || !shareId) return;
+  const groupId = selected.value.id;
   linking.value = true;
   try {
-    await api.linkShare(selected.value.id, shareId);
+    await api.linkShare(groupId, shareId);
     shareForm.value.share_id = null;
     $q.notify({ type: 'positive', message: 'Share linked' });
   } catch (e: any) {
@@ -378,18 +395,19 @@ async function linkShare(shareId: string | null) {
   } finally {
     linking.value = false;
   }
-  await loadGroupDetail(selected.value.id);
+  await loadGroupDetail(groupId);
 }
 
 async function unlinkShare(shareId: string) {
   if (!selected.value) return;
+  const groupId = selected.value.id;
   try {
-    await api.unlinkShare(selected.value.id, shareId);
+    await api.unlinkShare(groupId, shareId);
     $q.notify({ type: 'positive', message: 'Share unlinked' });
   } catch (e: any) {
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to unlink share' });
   }
-  await loadGroupDetail(selected.value.id);
+  await loadGroupDetail(groupId);
 }
 
 onMounted(async () => {
