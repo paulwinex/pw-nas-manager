@@ -47,7 +47,7 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn label="Create" color="primary" :loading="creating" :disable="!form.name" @click="createShare" />
+          <q-btn label="Create" color="primary" :loading="creating" :disable="!!form.name && !namePattern.test(form.name)" @click="createShare" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -92,6 +92,8 @@ const columns = [
   { name: 'actions', label: '', field: '', align: 'right' as const },
 ];
 
+const namePattern = /^[a-z][a-z0-9_-]{1,31}$/;
+
 async function load() {
   loading.value = true;
   try {
@@ -124,6 +126,7 @@ async function createShare() {
     creating.value = false;
   }
   await load();
+  await loadDirs();
 }
 
 function confirmDelete(share: ShareOut) {
