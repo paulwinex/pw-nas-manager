@@ -2,6 +2,7 @@
   <q-dialog
     :model-value="modelValue"
     @update:model-value="(v: boolean) => emits('update:modelValue', v)"
+    @hide="reset"
   >
     <q-card style="min-width: 640px; max-width: 95vw">
       <q-card-section>

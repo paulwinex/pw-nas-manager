@@ -139,15 +139,24 @@ async function load() {
   try {
     groups.value = (await api.listGroups()).data;
     const rows: UserMembership[] = [];
+    const uid = props.user.id;
     for (const g of groups.value) {
       const members = (await api.listMembers(g.id)).data;
-      const mine = members.find((m) => m.user_id === props.user!.id);
+      const mine = members.find((m) => m.user_id === uid);
       if (mine) rows.push({ ...mine, group_name: g.name, group_id: g.id });
     }
     memberships.value = rows;
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load groups' });
   } finally {
     loading.value = false;
   }
+}
+
+function resetForm() {
+  form.value.group_id = null;
+  form.value.access_level = 'ro';
+  form.value.expires_at = null;
 }
 
 async function add() {
@@ -160,24 +169,23 @@ async function add() {
       expires_at: form.value.expires_at ? new Date(form.value.expires_at).toISOString() : null,
     });
     $q.notify({ type: 'positive', message: 'Added to group' });
-    form.value.group_id = null;
-    form.value.expires_at = null;
-    await load();
+    resetForm();
   } catch (e: any) {
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to add' });
   } finally {
     adding.value = false;
   }
+  await load();
 }
 
 async function remove(row: UserMembership) {
   try {
     await api.removeMember(row.group_id, row.user_id);
     $q.notify({ type: 'positive', message: 'Removed from group' });
-    await load();
   } catch (e: any) {
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to remove' });
   }
+  await load();
 }
 
 function formatDate(value: string) {
