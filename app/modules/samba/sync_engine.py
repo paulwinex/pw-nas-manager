@@ -92,6 +92,7 @@ async def sync(session: AsyncSession) -> SyncReport:
         if name not in existing:
             await registry_manager.add_share(name, share_target.path)
             report.added.append(name)
+            params = {"comment": "NAS Manager"} | _desired_params(share_target)
             for key, value in sorted(params.items()):
                 await registry_manager.set_parm(name, key, value)
             report.params_set[name] = sorted(params)

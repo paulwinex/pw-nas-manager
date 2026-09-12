@@ -80,6 +80,7 @@ def test_sync_adds_removes_sets_params_once_then_noop(tmp_path, fake_runner):
     assert report.removed == ["ghost"]
     assert sorted(report.params_set["photos"]) == [
         "browseable",
+        "comment",
         "force user",
         "read list",
         "valid users",
@@ -92,7 +93,7 @@ def test_sync_adds_removes_sets_params_once_then_noop(tmp_path, fake_runner):
     assert len(adds) == 1
 
     setparm_calls = [c for c in fake_runner.calls if "setparm" in c["args"]]
-    assert len(setparm_calls) == 5
+    assert len(setparm_calls) == 6
 
     # Second run: registry now matches the target exactly -> zero mutating commands.
     fake_runner.set_response("net conf listshares", 0, "photos\n")

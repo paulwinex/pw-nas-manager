@@ -37,7 +37,6 @@ def test_add_share_command_shape(fake_runner):
         "/mnt/share/photos",
         "writeable=no",
         "guest_ok=no",
-        "comment=NAS Manager",
     ]
 
 
