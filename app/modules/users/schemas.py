@@ -15,6 +15,23 @@ class PasswordChange(BaseModel):
     new_password: str
 
 
+class MountScriptRequest(BaseModel):
+    password: str
+
+
+class ShareAccess(BaseModel):
+    name: str
+    path: str
+    access: str
+
+
+class MountScriptResponse(BaseModel):
+    username: str
+    shares: list[ShareAccess]
+    windows_script: str
+    linux_script: str
+
+
 class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 

@@ -1,8 +1,8 @@
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import Conflict, NotFound
-from app.core.security import hash_password
+from app.core.exceptions import Conflict, NotFound, Unauthorized
+from app.core.security import hash_password, verify_password
 from app.db.models import AccessLevel, Group, GroupShare, User, UserGroup
 from app.modules.samba import os_manager, sync_engine
 from app.modules.users.schemas import UserCreate
@@ -99,3 +99,34 @@ async def delete_user(session: AsyncSession, user_id: str) -> None:
     await os_manager.delete_user(username)
 
     await sync_engine.sync(session)
+
+
+async def build_mount_script(
+    session: AsyncSession, username: str, password: str
+) -> dict[str, object]:
+    user = await session.scalar(select(User).where(User.username == username))
+    if user is None:
+        raise NotFound(f"User '{username}' not found")
+    if not await verify_password(password, user.password_hash):
+        raise Unauthorized("Invalid credentials")
+
+    target = await sync_engine.compute_target(session)
+    shares: list[dict[str, str]] = []
+    for name, share in sorted(target.items()):
+        if username not in share.valid_users:
+            continue
+        access = "RW" if username in share.write_list else "RO"
+        shares.append({"name": name, "path": rf"\\nas\{name}", "access": access})
+
+    return {
+        "username": username,
+        "shares": shares,
+        "windows_script": "\n".join(
+            f"net use Z: {s['path']} /user:{username} {password}" for s in shares
+        ),
+        "linux_script": "\n".join(
+            f"mkdir -p /mnt/{s['name']} && mount -t cifs //nas/{s['name']} "
+            f"/mnt/{s['name']} -o username={username},password={password}"
+            for s in shares
+        ),
+    }

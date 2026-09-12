@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 from app.db.models import AccessLevel
@@ -20,12 +22,14 @@ class GroupOut(BaseModel):
 class MemberCreate(BaseModel):
     user_id: str
     access_level: AccessLevel = AccessLevel.RO
+    expires_at: datetime | None = None
 
 
 class MemberOut(BaseModel):
     user_id: str
     username: str
     access_level: AccessLevel
+    expires_at: datetime | None = None
 
 
 class LinkShare(BaseModel):

@@ -41,6 +41,10 @@ logs:
 test:
     {{COMPOSE}} run --rm test
 
+## Run integration tests against the live app (needs a client up + setup first)
+integration name:
+    bash tests/integration/run.sh {{CLIENT_PREFIX}}-{{name}}
+
 ## Run an arbitrary command inside the app container (uv-aware)
 app-exec +cmd:
     docker exec nas-app bash -lc "{{cmd}}"

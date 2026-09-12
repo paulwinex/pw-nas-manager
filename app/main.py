@@ -8,6 +8,7 @@ from app.core.database import SessionLocal, init_db
 from app.core.exceptions import register_exception_handlers
 from app.db.models import User
 from app.core.security import hash_password
+from app.core.scheduler import start_scheduler, stop_scheduler
 
 
 async def seed_admin() -> None:
@@ -34,7 +35,9 @@ async def seed_admin() -> None:
 async def lifespan(app: FastAPI):
     await init_db()
     await seed_admin()
+    start_scheduler()
     yield
+    stop_scheduler()
 
 
 def create_app() -> FastAPI:
