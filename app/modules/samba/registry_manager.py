@@ -28,7 +28,9 @@ async def show_share(name: str) -> dict[str, str]:
 
 
 async def add_share(name: str, path: str) -> None:
-    await _run_net_conf("addshare", name, path, "writeable=no", "guest_ok=no")
+    await _run_net_conf(
+        "addshare", name, path, "writeable=no", "guest_ok=no", "comment=NAS Manager"
+    )
 
 
 async def del_share(name: str) -> None:

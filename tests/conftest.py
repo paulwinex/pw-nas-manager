@@ -5,6 +5,8 @@ from pathlib import Path
 
 _TMP = tempfile.mkdtemp(prefix="nas-test-")
 os.environ["DB_PATH"] = str(Path(_TMP) / "test.db")
+_SHARE_ROOT = Path(tempfile.mkdtemp(prefix="nas-share-"))
+os.environ["SHARE_MOUNT_PATH"] = str(_SHARE_ROOT)
 
 from app.core.settings import get_settings  # noqa: E402
 
@@ -29,6 +31,11 @@ _TABLES = (
 @pytest.fixture()
 def db_path() -> str:
     return os.environ["DB_PATH"]
+
+
+@pytest.fixture()
+def share_root() -> Path:
+    return _SHARE_ROOT
 
 
 @pytest.fixture()

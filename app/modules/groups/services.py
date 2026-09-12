@@ -1,0 +1,175 @@
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import Conflict, NotFound
+from app.db.models import AccessLevel, Group, GroupShare, Share, User, UserGroup
+from app.modules.samba import sync_engine
+from app.modules.groups.schemas import MemberCreate
+
+
+async def list_groups(session: AsyncSession) -> list[Group]:
+    result = await session.scalars(select(Group).order_by(Group.name))
+    return list(result.all())
+
+
+async def get_group(session: AsyncSession, group_id: str) -> Group:
+    group = await session.get(Group, group_id)
+    if group is None:
+        raise NotFound(f"Group '{group_id}' not found")
+    return group
+
+
+async def create_group(session: AsyncSession, name: str) -> Group:
+    existing = await session.scalar(select(Group).where(Group.name == name))
+    if existing is not None:
+        raise Conflict(f"Group '{name}' already exists")
+
+    group = Group(name=name, is_personal=False)
+    session.add(group)
+    await session.commit()
+
+    await sync_engine.sync(session)
+    return group
+
+
+async def delete_group(session: AsyncSession, group_id: str) -> None:
+    group = await get_group(session, group_id)
+    if group.is_personal:
+        raise Conflict(f"Cannot delete personal group '{group.name}'")
+
+    await session.execute(delete(GroupShare).where(GroupShare.group_id == group.id))
+    await session.execute(delete(UserGroup).where(UserGroup.group_id == group.id))
+    await session.delete(group)
+    await session.commit()
+
+    await sync_engine.sync(session)
+
+
+async def list_members(session: AsyncSession, group_id: str) -> list[dict[str, object]]:
+    await get_group(session, group_id)
+    rows = (
+        await session.execute(
+            select(User.id, User.username, UserGroup.access_level)
+            .join(UserGroup, UserGroup.user_id == User.id)
+            .where(UserGroup.group_id == group_id)
+            .order_by(User.username)
+        )
+    ).all()
+    return [
+        {"user_id": user_id, "username": username, "access_level": access_level}
+        for user_id, username, access_level in rows
+    ]
+
+
+async def add_member(
+    session: AsyncSession, group_id: str, data: MemberCreate
+) -> dict[str, object]:
+    group = await get_group(session, group_id)
+    user = await session.get(User, data.user_id)
+    if user is None:
+        raise NotFound(f"User '{data.user_id}' not found")
+
+    existing = await session.scalar(
+        select(UserGroup).where(
+            UserGroup.group_id == group_id, UserGroup.user_id == data.user_id
+        )
+    )
+    if existing is not None:
+        raise Conflict(
+            f"User '{user.username}' is already a member of group '{group.name}'"
+        )
+
+    if group.is_personal:
+        member_count = await session.scalar(
+            select(func.count()).select_from(UserGroup).where(
+                UserGroup.group_id == group_id
+            )
+        )
+        if member_count >= 1:
+            raise Conflict(f"Personal group '{group.name}' already has a member")
+
+    session.add(
+        UserGroup(
+            user_id=data.user_id,
+            group_id=group_id,
+            access_level=data.access_level,
+        )
+    )
+    await session.commit()
+
+    await sync_engine.sync(session)
+    return {
+        "user_id": data.user_id,
+        "username": user.username,
+        "access_level": data.access_level,
+    }
+
+
+async def remove_member(session: AsyncSession, group_id: str, user_id: str) -> None:
+    group = await get_group(session, group_id)
+    if group.is_personal:
+        raise Conflict(f"Cannot remove member from personal group '{group.name}'")
+
+    membership = await session.scalar(
+        select(UserGroup).where(
+            UserGroup.group_id == group_id, UserGroup.user_id == user_id
+        )
+    )
+    if membership is None:
+        raise NotFound(
+            f"User '{user_id}' is not a member of group '{group.name}'"
+        )
+
+    await session.delete(membership)
+    await session.commit()
+
+    await sync_engine.sync(session)
+
+
+async def list_group_shares(session: AsyncSession, group_id: str) -> list[Share]:
+    await get_group(session, group_id)
+    result = await session.scalars(
+        select(Share)
+        .join(GroupShare, GroupShare.share_id == Share.id)
+        .where(GroupShare.group_id == group_id)
+        .order_by(Share.name)
+    )
+    return list(result.all())
+
+
+async def link_share(session: AsyncSession, group_id: str, share_id: str) -> Share:
+    await get_group(session, group_id)
+    share = await session.get(Share, share_id)
+    if share is None:
+        raise NotFound(f"Share '{share_id}' not found")
+
+    existing = await session.scalar(
+        select(GroupShare).where(
+            GroupShare.group_id == group_id, GroupShare.share_id == share_id
+        )
+    )
+    if existing is None:
+        session.add(GroupShare(group_id=group_id, share_id=share_id))
+        await session.commit()
+
+    await sync_engine.sync(session)
+    return share
+
+
+async def unlink_share(session: AsyncSession, group_id: str, share_id: str) -> None:
+    await get_group(session, group_id)
+
+    link = await session.scalar(
+        select(GroupShare).where(
+            GroupShare.group_id == group_id, GroupShare.share_id == share_id
+        )
+    )
+    if link is None:
+        raise NotFound(
+            f"Share '{share_id}' is not linked to group '{group_id}'"
+        )
+
+    await session.delete(link)
+    await session.commit()
+
+    await sync_engine.sync(session)
