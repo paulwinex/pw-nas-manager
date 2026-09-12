@@ -12,6 +12,7 @@ dependencies = [
     "PyJWT>=2.8",
     "bcrypt>=4.0",
     "apscheduler>=3.10,<4",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]

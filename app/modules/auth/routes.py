@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +28,20 @@ async def login(
 ) -> TokenResponse:
     user = await session.scalar(select(User).where(User.username == body.username))
     if user is None or not await verify_password(body.password, user.password_hash):
+        raise Unauthorized("Invalid credentials")
+    if not user.is_admin:
+        raise Forbidden("Admin privileges required")
+    return TokenResponse(access_token=create_access_token(user.id))
+
+
+@router.post("/token", response_model=TokenResponse)
+async def token(
+    form: OAuth2PasswordRequestForm = Depends(),
+    session: AsyncSession = Depends(get_session),
+) -> TokenResponse:
+    """Form-based login used by the Swagger UI 'Authorize' button."""
+    user = await session.scalar(select(User).where(User.username == form.username))
+    if user is None or not await verify_password(form.password, user.password_hash):
         raise Unauthorized("Invalid credentials")
     if not user.is_admin:
         raise Forbidden("Admin privileges required")
