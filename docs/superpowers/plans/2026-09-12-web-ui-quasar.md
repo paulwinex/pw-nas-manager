@@ -552,14 +552,15 @@ In the `boot:` list:
 Create `web-ui/src/boot/dark.ts`:
 
 ```ts
-import { useQuasar } from 'quasar';
+import { Dark } from 'quasar';
 
-export default (() => {
-  const $q = useQuasar();
+export default () => {
   const saved = localStorage.getItem('nas.dark');
-  $q.dark.set(saved === null ? true : saved === '1');
-});
+  Dark.set(saved === null ? true : saved === '1');
+};
 ```
+
+> NOTE: use `Dark.set` (the "outside a Vue file" API), NOT `useQuasar()` — `useQuasar()` is `undefined` in a boot-file's non-component context and would crash the app at boot (blank page). `useQuasar` remains available for component SFCs.
 
 - [ ] **Step 4: Verify type-check**
 
@@ -572,6 +573,17 @@ Expected: exit 0 (config/boot compile).
 git add web-ui/package.json web-ui/yarn.lock web-ui/quasar.config.ts web-ui/src/boot/dark.ts
 git commit -m "feat(ui): dark theme by default + dev proxy for /api"
 ```
+
+- [ ] **Step 6: Commit the remaining scaffold baseline**
+
+The Quasar scaffold files (`index.html`, `src/App.vue`, `src/router/`, `src/pages/`, `src/css/`, `tsconfig.json`, `env.d.ts`, `postcss.config.js`, `public/`, `.vscode/`, `.gitignore`, `.editorconfig`, `web-ui/README.md`) are only committed here — otherwise a clean checkout cannot build the UI. They should still be committed AFTER the axios/dark change so the first UI commit stays focused:
+
+```bash
+git add web-ui
+git commit -m "chore(ui): commit Quasar scaffold baseline"
+```
+
+(Delete any stray non-scaffold files in `web-ui/` first: `pnpm-workspace.yaml` and the throwaway `test-quasar*.mjs` harnesses.)
 
 ### Task 6: API client, types, typed endpoints
 
