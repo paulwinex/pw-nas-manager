@@ -1,7 +1,6 @@
-import { useQuasar } from 'quasar';
+import { Dark } from 'quasar';
 
-export default (() => {
-  const $q = useQuasar();
+export default () => {
   const saved = localStorage.getItem('nas.dark');
-  $q.dark.set(saved === null ? true : saved === '1');
-});
+  Dark.set(saved === null ? true : saved === '1');
+};
