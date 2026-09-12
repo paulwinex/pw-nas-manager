@@ -1,6 +1,6 @@
 <template>
   <q-page class="login-page flex flex-center">
-    <q-card class="login-card">
+    <q-card class="login-card" bordered>
       <q-card-section class="text-center q-pt-xl">
         <q-icon name="folder_shared" size="56px" color="primary" />
         <div class="text-h5 q-mt-sm">NAS Manager</div>
@@ -39,6 +39,7 @@
             label="Sign in"
             color="primary"
             unelevated
+            no-caps
             class="full-width"
             :loading="loading"
           />
@@ -51,6 +52,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
@@ -67,14 +69,16 @@ async function onSubmit() {
   error.value = '';
   try {
     await auth.login(username.value, password.value);
-    router.push('/');
-  } catch (e: any) {
-    const status = e?.response?.status;
-    if (status === 401) {
-      error.value = 'Invalid username or password';
-    } else if (status === 403) {
-      error.value = 'Administrator privileges required';
-    } else {
+    await router.push('/');
+  } catch (e) {
+    if (axios.isAxiosError(e)) {
+      if (e.response?.status === 401) {
+        error.value = 'Invalid username or password';
+      } else if (e.response?.status === 403) {
+        error.value = 'Administrator privileges required';
+      }
+    }
+    if (!error.value) {
       error.value = 'Cannot reach the server';
     }
   } finally {
@@ -86,7 +90,7 @@ async function onSubmit() {
 <style lang="scss" scoped>
 .login-page {
   min-height: 100vh;
-  background: $dark;
+  background: $dark-page;
 }
 
 .login-card {
