@@ -22,6 +22,8 @@ class Settings(BaseSettings):
 
     expiry_check_interval_seconds: int = 60
 
+    ui_dist_dir: Path = Path("./ui-dist")
+
 
 @lru_cache
 def get_settings() -> Settings:
