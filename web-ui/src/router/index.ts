@@ -6,17 +6,10 @@ import {
   createWebHashHistory,
   createWebHistory,
 } from 'vue-router';
+import { configureAuth } from '@/api/client';
+import { useAuthStore } from '@/stores/auth';
 
-/*
- * If not building with SSR mode, you can
- * directly export the Router instantiation;
- *
- * The function below can be async too; either use
- * async/await or return a Promise which resolves
- * with the Router instance.
- */
-
-export default defineRouter((/* { store, ssrContext } */) => {
+export default defineRouter(() => {
   const createHistory = import.meta.env.QUASAR_SERVER
     ? createMemoryHistory
     : (import.meta.env.QUASAR_VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory);
@@ -24,14 +17,36 @@ export default defineRouter((/* { store, ssrContext } */) => {
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
-
-    // Leave this as is and make changes in quasar.conf.js instead!
-    // quasar.conf.js -> build -> vueRouterMode
-    // quasar.conf.js -> build -> publicPath
-    history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE)
+    history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE),
   });
 
-  // enable HMR for it
+  Router.beforeEach(async (to) => {
+    const auth = useAuthStore();
+    if (to.path !== '/login' && !auth.authenticated) {
+      return { path: '/login' };
+    }
+    if (to.path === '/login' && auth.authenticated) {
+      return { path: '/' };
+    }
+    if (to.path !== '/login' && auth.authenticated && !auth.profileLoaded) {
+      try {
+        await auth.refreshProfile();
+      } catch {
+        auth.logout();
+        return { path: '/login' };
+      }
+    }
+    return true;
+  });
+
+  configureAuth(
+    () => useAuthStore().token,
+    () => {
+      useAuthStore().logout();
+      Router.push('/login');
+    }
+  );
+
   if (import.meta.hot) {
     handleHotUpdate(Router);
   }
