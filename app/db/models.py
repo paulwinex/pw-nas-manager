@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import DateTime, Enum as SqlEnum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -59,7 +59,10 @@ class UserGroup(Base):
 
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     group_id: Mapped[str] = mapped_column(ForeignKey("groups.id", ondelete="CASCADE"), primary_key=True)
-    access_level: Mapped[AccessLevel] = mapped_column(default=AccessLevel.RO)
+    access_level: Mapped[AccessLevel] = mapped_column(
+        SqlEnum(AccessLevel, values_callable=lambda enum: [member.value for member in enum]),
+        default=AccessLevel.RO,
+    )
 
 
 class UserGroupExpiration(Base):

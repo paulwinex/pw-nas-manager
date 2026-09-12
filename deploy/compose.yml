@@ -28,6 +28,7 @@ services:
     privileged: true
     env_file: .env
     working_dir: /app
+    entrypoint: []
     volumes:
       - ./app:/app/app
       - ./tests:/app/tests

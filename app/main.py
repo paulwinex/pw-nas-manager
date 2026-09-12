@@ -1,15 +1,39 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from sqlalchemy import select
 
 from app.api.v1.router import api_router
-from app.core.database import init_db
+from app.core.database import SessionLocal, init_db
 from app.core.exceptions import register_exception_handlers
+from app.db.models import User
+from app.core.security import hash_password
+
+
+async def seed_admin() -> None:
+    from app.core.settings import get_settings
+
+    settings = get_settings()
+    async with SessionLocal() as session:
+        has_admin = await session.scalar(
+            select(User.id).where(User.is_admin.is_(True)).limit(1)
+        )
+        if has_admin is not None:
+            return
+        session.add(
+            User(
+                username=settings.admin_username,
+                password_hash=await hash_password(settings.admin_password),
+                is_admin=True,
+            )
+        )
+        await session.commit()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    await seed_admin()
     yield
 
 
