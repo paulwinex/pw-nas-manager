@@ -49,6 +49,23 @@ integration name:
 app-exec +cmd:
     docker exec nas-app bash -lc "{{cmd}}"
 
+# ---------- UI (web-ui) ----------
+
+## Start the Quasar dev server (proxies /api to localhost:8000)
+[working-directory: 'web-ui']
+ui-dev:
+    yarn dev
+
+## Type-check the frontend
+[working-directory: 'web-ui']
+ui-typecheck:
+    yarn typecheck
+
+## Build the frontend production bundle
+[working-directory: 'web-ui']
+ui-build:
+    yarn build
+
 # ---------- Clients ----------
 
 ## Start a test client container (e.g. just client-up pc1)

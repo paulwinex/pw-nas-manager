@@ -66,6 +66,15 @@ docker compose -f deploy/compose.yml --project-directory . up -d --build
 > Шары, звучащие через Samba, подключаются к имени `nas` в docker-сети
 > (например `//nas/photos`). Снаружи этой сети Samba не слушается.
 
+### Веб-интерфейс (web-ui)
+
+- Админка: Vue 3 + Quasar 2 в `web-ui/` (английский язык).
+- Dev: `just ui-dev` — dev-сервер, `/api` уходит на `http://localhost:8000` (CORS не нужен).
+- Type-check: `just ui-typecheck`. Сборка: `just ui-build` (в `web-ui/dist/spa`).
+- Prod: образ собирается многоступенчато — UI собирается и раздаётся FastAPI по `/`
+  (порт 8000). Если `ui-dist` в образе отсутствует, UI не монтируется.
+- Логин: `http://localhost:8000` → Sign in (admin/admin123). `/docs` — Swagger как раньше.
+
 ## Порт и доступ к Samba извне
 
 `docker compose` публикует на хост **только HTTP-порт 8000** (API и `/docs`).
