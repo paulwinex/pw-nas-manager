@@ -5,6 +5,11 @@
       <q-btn flat round icon="refresh" @click="load" :loading="loading" />
     </div>
 
+    <div v-if="failed" class="text-negative row items-center q-gutter-sm q-mb-md">
+      <span>Failed to load dashboard data.</span>
+      <q-btn flat dense color="negative" label="Retry" @click="load" :loading="loading" />
+    </div>
+
     <template v-if="stats">
       <div class="row q-col-gutter-md">
         <q-card v-for="c in cards" :key="c.label" class="col-xs-6 col-md-4 col-xl-2">
@@ -42,7 +47,7 @@
                   :label="m.access_level.toUpperCase()"
                 />
               </td>
-              <td class="text-right">{{ formatDate(m.expires_at) }}</td>
+              <td class="text-right">{{ formatDateTime(m.expires_at) }}</td>
             </tr>
           </tbody>
         </q-markup-table>
@@ -60,19 +65,20 @@
         </q-card-section>
       </q-card>
     </template>
-    <div v-else class="text-grey">Loading…</div>
+    <div v-else-if="!failed" class="text-grey">Loading…</div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { date } from 'quasar';
 import { api } from '@/api';
+import { formatDateTime } from '@/utils/dates';
 import type { StatsResponse } from '@/api/types';
 
 const loading = ref(false);
 const stats = ref<StatsResponse | null>(null);
 const health = ref<string | null>(null);
+const failed = ref(false);
 
 const cards = computed(() => {
   if (!stats.value) return [];
@@ -89,17 +95,16 @@ const cards = computed(() => {
 
 async function load() {
   loading.value = true;
+  failed.value = false;
   try {
     const [s, h] = await Promise.all([api.stats(), api.health()]);
     stats.value = s.data;
     health.value = h.data.status;
+  } catch {
+    failed.value = true;
   } finally {
     loading.value = false;
   }
-}
-
-function formatDate(value: string) {
-  return date.formatDate(value, 'YYYY-MM-DD HH:mm');
 }
 
 onMounted(load);
