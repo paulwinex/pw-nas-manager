@@ -131,6 +131,8 @@ async function load() {
   loading.value = true;
   try {
     users.value = (await api.listUsers()).data;
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load users' });
   } finally {
     loading.value = false;
   }
@@ -146,9 +148,13 @@ async function createUser() {
   try {
     await api.createUser(createForm.value);
     createOpen.value = false;
+    createForm.value = { username: '', password: '', is_admin: false };
     $q.notify({ type: 'positive', message: 'User created' });
   } catch (e: any) {
-    createError.value = e?.response?.data?.detail ?? 'Failed to create user';
+    const detail = e?.response?.data?.detail;
+    createError.value = Array.isArray(detail)
+      ? detail.map((d: { msg: string }) => d.msg).join('; ')
+      : (detail ?? 'Failed to create user');
   } finally {
     createLoading.value = false;
   }
