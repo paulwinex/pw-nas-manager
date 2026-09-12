@@ -8,6 +8,8 @@ from app.core.database import get_session
 from app.core.exceptions import Forbidden, Unauthorized
 from app.db.models import User
 from app.core.security import create_access_token, verify_password
+from app.modules.auth.dependencies import get_current_admin
+from app.modules.users.schemas import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -46,3 +48,8 @@ async def token(
     if not user.is_admin:
         raise Forbidden("Admin privileges required")
     return TokenResponse(access_token=create_access_token(user.id))
+
+
+@router.get("/me", response_model=UserOut)
+async def me(current: User = Depends(get_current_admin)) -> UserOut:
+    return UserOut.model_validate(current)

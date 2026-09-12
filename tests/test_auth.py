@@ -70,3 +70,16 @@ def test_users_endpoints_require_auth(client):
     assert client.get("/api/v1/users").status_code == 401
     bad = {"Authorization": "Bearer not-a-real-token"}
     assert client.get("/api/v1/users", headers=bad).status_code == 401
+
+
+def test_me_requires_auth(client):
+    assert client.get("/api/v1/auth/me").status_code == 401
+
+
+def test_me_returns_current_admin(client, auth):
+    response = client.get("/api/v1/auth/me", headers=auth)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["username"] == "admin"
+    assert body["is_admin"] is True
+    assert body["id"]
