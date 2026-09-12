@@ -10,6 +10,7 @@ from app.modules.groups.routes import router as groups_router
 from app.modules.groups.services import sweep_expired_memberships
 from app.modules.samba.sync_engine import SyncReport, registry_state, sync
 from app.modules.shares.routes import router as shares_router
+from app.modules.stats.routes import router as stats_router
 from app.modules.users.routes import router as users_router
 
 api_router = APIRouter()
@@ -59,3 +60,4 @@ api_router.include_router(auth_router)
 api_router.include_router(users_router)
 api_router.include_router(groups_router)
 api_router.include_router(shares_router)
+api_router.include_router(stats_router)
