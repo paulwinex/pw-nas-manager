@@ -38,6 +38,7 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | '//(index)'
       | '//groups'
+      | '//shares'
       | '//users'
     >,
     '//(index)': RouteRecordInfo<
@@ -50,6 +51,13 @@ declare module 'vue-router/auto-routes' {
     '//groups': RouteRecordInfo<
       '//groups',
       '/groups',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '//shares': RouteRecordInfo<
+      '//shares',
+      '/shares',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -93,6 +101,7 @@ declare module 'vue-router/auto-routes' {
         | '/'
         | '//(index)'
         | '//groups'
+        | '//shares'
         | '//users'
       views:
         | 'default'
@@ -110,6 +119,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/index/groups.vue': {
       routes:
         | '//groups'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/index/shares.vue': {
+      routes:
+        | '//shares'
       views:
         | never
       pathParamNames:
