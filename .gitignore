@@ -1,3 +1,4 @@
+.idea/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -5,6 +6,5 @@ __pycache__/
 .env
 data/
 share/*
-!share/.gitkeep
 .pytest_cache/
-docs/superpowers/.scratch/
+
