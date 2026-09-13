@@ -24,7 +24,7 @@
         </q-card>
       </div>
 
-      <q-card flat bordered class="dash-card dash-card--full">
+      <q-card flat bordered class="q-mt-md">
         <q-card-section>
           <div class="text-h6">Expiring memberships (next 7 days)</div>
         </q-card-section>
@@ -56,19 +56,6 @@
           </tbody>
         </q-markup-table>
       </q-card>
-
-      <q-card flat bordered class="dash-card--full">
-        <q-card-section>
-          <div class="text-h6">API status</div>
-        </q-card-section>
-        <q-separator inset />
-        <q-card-section class="q-pt-none row items-center q-col-gutter-md">
-          <q-badge :color="health === 'ok' ? 'positive' : 'negative'">
-            {{ health ?? 'unknown' }}
-          </q-badge>
-          <span class="text-grey">Registry: {{ stats.registry_shares_count }} shares</span>
-        </q-card-section>
-      </q-card>
     </template>
     <div v-else-if="!failed" class="text-grey">Loading…</div>
   </q-page>
@@ -82,7 +69,6 @@ import type { StatsResponse } from '@/api/types';
 
 const loading = ref(false);
 const stats = ref<StatsResponse | null>(null);
-const health = ref<string | null>(null);
 const failed = ref(false);
 
 const cards = computed(() => {
@@ -102,9 +88,8 @@ async function load() {
   loading.value = true;
   failed.value = false;
   try {
-    const [s, h] = await Promise.all([api.stats(), api.health()]);
+    const s = await api.stats();
     stats.value = s.data;
-    health.value = h.data.status;
   } catch {
     failed.value = true;
   } finally {
