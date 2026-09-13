@@ -74,6 +74,11 @@ ui-typecheck:
 ui-build:
     yarn build
 
+## Generate app icons (favicon) from a source PNG (path relative to web-ui/)
+[working-directory: 'web-ui']
+seticon source='../nas-manager.png':
+    npx --yes @quasar/icongenie generate -m spa -i {{source}} --quality 8
+
 # ---------- Clients ----------
 
 ## Start a test client container (e.g. just client-up pc1)

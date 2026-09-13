@@ -2,7 +2,7 @@
   "name": "simple-share-ui",
   "version": "0.0.1",
   "description": "A Quasar Project",
-  "productName": "Simple Share UI",
+  "productName": "NAS Manager",
   "author": "NAS Dev <paulwinex@gmail.com>",
   "type": "module",
   "private": true,

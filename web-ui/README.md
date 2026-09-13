@@ -1,4 +1,4 @@
-# Simple Share UI (simple-share-ui)
+# NAS Manager UI
 
 ## Install the dependencies
 
