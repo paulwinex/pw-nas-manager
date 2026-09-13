@@ -10,7 +10,6 @@ id "$SERVICE_USER" >/dev/null 2>&1 || useradd -r -M -s /usr/sbin/nologin "$SERVI
 sed "s/@WORKGROUP@/${WORKGROUP_NAME}/g" /app/deploy/smb.conf.template > /etc/samba/smb.conf
 
 mkdir -p /var/lib/samba/private /var/log/samba "$MOUNT_ROOT"
-chown -R "$SERVICE_USER:$SERVICE_USER" "$MOUNT_ROOT"
 
 smbd -D || { echo "smbd failed to start"; exit 1; }
 
