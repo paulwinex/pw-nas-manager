@@ -87,6 +87,8 @@ export default defineConfig((/* ctx */) => {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework
     framework: {
+      cssVariables: true,
+
       config: {
         dark: true
       },
