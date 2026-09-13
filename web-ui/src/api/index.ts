@@ -44,6 +44,11 @@ export const api = {
   ) => client.post<MemberOut>(`/api/v1/groups/${groupId}/members`, body),
   removeMember: (groupId: string, userId: string) =>
     client.delete<void>(`/api/v1/groups/${groupId}/members/${userId}`),
+  updateMember: (
+    groupId: string,
+    userId: string,
+    body: { access_level?: string; expires_at?: string | null }
+  ) => client.patch<MemberOut>(`/api/v1/groups/${groupId}/members/${userId}`, body),
   listGroupShares: (groupId: string) => client.get<ShareOut[]>(`/api/v1/groups/${groupId}/shares`),
   linkShare: (groupId: string, shareId: string) =>
     client.post<ShareOut>(`/api/v1/groups/${groupId}/shares`, { share_id: shareId }),

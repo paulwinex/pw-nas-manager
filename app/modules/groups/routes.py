@@ -10,6 +10,7 @@ from app.modules.groups.schemas import (
     LinkShare,
     MemberCreate,
     MemberOut,
+    MemberUpdate,
 )
 from app.modules.shares.schemas import ShareOut
 
@@ -62,6 +63,17 @@ async def remove_member(
     group_id: str, user_id: str, session: AsyncSession = Depends(get_session)
 ) -> None:
     await services.remove_member(session, group_id, user_id)
+
+
+@router.patch("/{group_id}/members/{user_id}", response_model=MemberOut)
+async def update_member(
+    body: MemberUpdate,
+    group_id: str,
+    user_id: str,
+    session: AsyncSession = Depends(get_session),
+) -> MemberOut:
+    member = await services.update_member(session, group_id, user_id, body)
+    return MemberOut.model_validate(member)
 
 
 @router.get("/{group_id}/shares", response_model=list[ShareOut])

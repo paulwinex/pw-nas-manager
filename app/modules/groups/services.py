@@ -14,7 +14,7 @@ from app.db.models import (
     UserGroupExpiration,
 )
 from app.modules.samba import sync_engine
-from app.modules.groups.schemas import MemberCreate
+from app.modules.groups.schemas import MemberCreate, MemberUpdate
 
 
 async def list_groups(session: AsyncSession) -> list[Group]:
@@ -122,14 +122,24 @@ async def add_member(
         )
     )
     if data.expires_at is not None:
-        session.add(
-            UserGroupExpiration(
-                user_id=data.user_id,
-                group_id=group_id,
-                expires_at=data.expires_at,
-                is_active=True,
+        expiration = await session.scalar(
+            select(UserGroupExpiration).where(
+                UserGroupExpiration.user_id == data.user_id,
+                UserGroupExpiration.group_id == group_id,
             )
         )
+        if expiration is None:
+            session.add(
+                UserGroupExpiration(
+                    user_id=data.user_id,
+                    group_id=group_id,
+                    expires_at=data.expires_at,
+                    is_active=True,
+                )
+            )
+        else:
+            expiration.expires_at = data.expires_at
+            expiration.is_active = True
     await session.commit()
 
     await sync_engine.sync(session)
@@ -137,6 +147,56 @@ async def add_member(
         "user_id": data.user_id,
         "username": user.username,
         "access_level": data.access_level,
+        "expires_at": data.expires_at,
+    }
+
+
+async def update_member(
+    session: AsyncSession, group_id: str, user_id: str, data: MemberUpdate
+) -> dict[str, object]:
+    group = await get_group(session, group_id)
+    membership = await session.scalar(
+        select(UserGroup).where(
+            UserGroup.group_id == group_id, UserGroup.user_id == user_id
+        )
+    )
+    if membership is None:
+        raise NotFound(f"User '{user_id}' is not a member of group '{group.name}'")
+
+    if data.access_level is not None:
+        membership.access_level = data.access_level
+
+    expiration = await session.scalar(
+        select(UserGroupExpiration).where(
+            UserGroupExpiration.user_id == user_id,
+            UserGroupExpiration.group_id == group_id,
+        )
+    )
+    if data.expires_at is not None:
+        if expiration is None:
+            session.add(
+                UserGroupExpiration(
+                    user_id=user_id,
+                    group_id=group_id,
+                    expires_at=data.expires_at,
+                    is_active=True,
+                )
+            )
+        else:
+            expiration.expires_at = data.expires_at
+            expiration.is_active = True
+    elif expiration is not None:
+        expiration.is_active = False
+    await session.commit()
+
+    await sync_engine.sync(session)
+
+    user = await session.get(User, user_id)
+    assert user is not None
+    return {
+        "user_id": user_id,
+        "username": user.username,
+        "access_level": membership.access_level,
         "expires_at": data.expires_at,
     }
 

@@ -25,6 +25,11 @@ class MemberCreate(BaseModel):
     expires_at: datetime | None = None
 
 
+class MemberUpdate(BaseModel):
+    access_level: AccessLevel | None = None
+    expires_at: datetime | None = None
+
+
 class MemberOut(BaseModel):
     user_id: str
     username: str
