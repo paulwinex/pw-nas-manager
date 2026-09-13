@@ -2,12 +2,13 @@
   <q-page class="q-pa-md">
     <div class="text-h5 q-mb-md">System</div>
 
-    <div class="row q-col-gutter-md">
-      <q-card class="col-12 col-md-4">
+    <div class="dash-grid">
+      <q-card flat bordered class="dash-card-half">
         <q-card-section class="row items-center justify-between q-pb-sm">
-          <div class="text-subtitle1">NAS host</div>
+          <div class="text-h6">NAS host</div>
           <q-btn flat round dense icon="refresh" @click="loadConfig" :loading="configLoading" />
         </q-card-section>
+        <q-separator inset />
         <q-card-section class="q-pt-none">
           <code class="text-subtitle2">
             {{ nasHost ? `${nasHost}:${nasPort}` : 'unknown' }}
@@ -18,32 +19,35 @@
         </q-card-section>
       </q-card>
 
-      <q-card class="col-12 col-md-4">
-        <q-card-section>
-          <div class="text-subtitle1">API health</div>
+      <q-card flat bordered class="dash-card-half">
+        <q-card-section class="row items-center justify-between q-pb-sm">
+          <div class="text-h6">API health</div>
+          <q-btn flat round dense icon="refresh" @click="loadHealth" :loading="healthLoading" />
         </q-card-section>
-        <q-card-section class="row items-center q-col-gutter-md">
+        <q-separator inset />
+        <q-card-section class="q-pt-none row items-center q-col-gutter-md">
           <q-badge :color="health === 'ok' ? 'positive' : 'negative'">
             {{ health ?? 'unknown' }}
           </q-badge>
-          <q-btn flat round dense icon="refresh" @click="loadHealth" :loading="healthLoading" />
         </q-card-section>
       </q-card>
 
-      <q-card class="col-12 col-md-4">
+      <q-card flat bordered class="dash-card-half">
         <q-card-section>
-          <div class="text-subtitle1">Registry sync</div>
+          <div class="text-h6">Registry sync</div>
         </q-card-section>
+        <q-separator inset />
         <q-card-section class="q-pt-none">
           <q-btn label="Sync now" icon="sync" color="primary" :loading="syncing" @click="runSync" />
           <pre v-if="syncReport" class="q-mt-sm">{{ JSON.stringify(syncReport, null, 2) }}</pre>
         </q-card-section>
       </q-card>
 
-      <q-card class="col-12 col-md-4">
+      <q-card flat bordered class="dash-card-half">
         <q-card-section>
-          <div class="text-subtitle1">Membership sweep</div>
+          <div class="text-h6">Membership sweep</div>
         </q-card-section>
+        <q-separator inset />
         <q-card-section class="q-pt-none">
           <q-btn
             label="Sweep now"
@@ -62,11 +66,12 @@
       </q-card>
     </div>
 
-    <q-card class="q-mt-md">
-      <q-card-section class="row items-center justify-between">
-        <div class="text-subtitle1">Samba registry</div>
+    <q-card flat bordered class="q-mt-md">
+      <q-card-section class="row items-center justify-between q-pb-sm">
+        <div class="text-h6">Samba registry</div>
         <q-btn flat round icon="refresh" @click="loadRegistry" :loading="registryLoading" />
       </q-card-section>
+      <q-separator inset />
       <q-card-section class="q-pt-none">
         <pre>{{ JSON.stringify(registry, null, 2) }}</pre>
       </q-card-section>
