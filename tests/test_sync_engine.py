@@ -102,6 +102,7 @@ def test_sync_adds_removes_sets_params_once_then_noop(tmp_path, fake_runner):
         0,
         "[photos]\n"
         f"\tpath = {root / 'photos'}\n"
+        "\tcomment = NAS Manager\n"
         "\tforce user = service-user\n"
         "\tbrowseable = yes\n"
         "\tvalid users = alice bob\n"
@@ -133,6 +134,7 @@ def test_sync_updates_changed_params_only(tmp_path, fake_runner):
         0,
         "[photos]\n"
         f"\tpath = {root / 'photos'}\n"
+        "\tcomment = NAS Manager\n"
         "\tforce user = service-user\n"
         "\tbrowseable = yes\n"
         "\tvalid users = bob\n"

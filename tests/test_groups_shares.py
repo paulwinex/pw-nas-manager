@@ -16,12 +16,10 @@ def test_create_group_and_shares_flow(client, auth, fake_runner, share_root):
     assert group.status_code == 201, group.text
     group_id = group.json()["id"]
 
+    (share_root / "photos").mkdir(exist_ok=True)
     share = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth)
     assert share.status_code == 201, share.text
     share_id = share.json()["id"]
-
-    assert (Path(os.environ["SHARE_MOUNT_PATH"]) / "photos").is_dir()
-    assert fake_runner.find("chown", str(share_root / "photos"))
 
     linked = client.post(
         f"/api/v1/groups/{group_id}/shares",
@@ -66,25 +64,27 @@ def test_personal_group_rules(client, auth, fake_runner):
 def test_available_dirs_lists_unregistered(client, auth, fake_runner, share_root):
     (share_root / "docs").mkdir(exist_ok=True)
     (share_root / "vault").mkdir(exist_ok=True)
+    (share_root / "photos").mkdir(exist_ok=True)
 
     registered = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth)
     assert registered.status_code == 201, registered.text
 
     available = client.get("/api/v1/shares/available", headers=auth)
     names = available.json()
-    assert "docs" in names
-    assert "vault" in names
-    assert "photos" not in names
+    assert str(share_root / "docs") in names
+    assert str(share_root / "vault") in names
+    assert str(share_root / "photos") not in names
 
 
-def test_duplicate_share_conflict(client, auth, fake_runner):
+def test_duplicate_share_conflict(client, auth, fake_runner, share_root):
+    (share_root / "photos").mkdir(exist_ok=True)
     first = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth)
     assert first.status_code == 201, first.text
     second = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth)
     assert second.status_code == 409, second.text
 
 
-def test_members_rw_and_ro(client, auth, fake_runner):
+def test_members_rw_and_ro(client, auth, fake_runner, share_root):
     alice = client.post(
         "/api/v1/users", json={"username": "alice", "password": "secret123"}, headers=auth
     ).json()
@@ -92,6 +92,7 @@ def test_members_rw_and_ro(client, auth, fake_runner):
         "/api/v1/users", json={"username": "bob", "password": "secret123"}, headers=auth
     ).json()
     group = client.post("/api/v1/groups", json={"name": "team"}, headers=auth).json()
+    (share_root / "photos").mkdir(exist_ok=True)
     share = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth).json()
 
     client.post(
@@ -127,7 +128,8 @@ def test_members_rw_and_ro(client, auth, fake_runner):
     assert photos.read_list == ["alice"]
 
 
-def test_delete_share_removes_from_registry_on_sync(client, auth, fake_runner, db_path):
+def test_delete_share_removes_from_registry_on_sync(client, auth, fake_runner, db_path, share_root):
+    (share_root / "photos").mkdir(exist_ok=True)
     share = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth).json()
     user = client.post(
         "/api/v1/users", json={"username": "alice", "password": "secret123"}, headers=auth

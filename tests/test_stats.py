@@ -5,13 +5,14 @@ def test_stats_requires_auth(client):
     assert client.get("/api/v1/stats").status_code == 401
 
 
-def test_stats_counts_and_expiring(client, auth, fake_runner):
+def test_stats_counts_and_expiring(client, auth, fake_runner, share_root):
     user = client.post(
         "/api/v1/users", headers=auth, json={"username": "zuser", "password": "secret123"}
     )
     assert user.status_code == 201, user.text
     group = client.post("/api/v1/groups", headers=auth, json={"name": "zteam"})
     assert group.status_code == 201, group.text
+    (share_root / "zdata").mkdir(exist_ok=True)
     share = client.post("/api/v1/shares", headers=auth, json={"name": "zdata"})
     assert share.status_code == 201, share.text
 

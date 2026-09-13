@@ -1,6 +1,8 @@
 import asyncio
+import os
 import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 from sqlalchemy import select
 
@@ -20,6 +22,7 @@ def _make_team(client, auth):
         "/api/v1/users", json={"username": "bob", "password": "secret123"}, headers=auth
     ).json()
     group = client.post("/api/v1/groups", json={"name": "team"}, headers=auth).json()
+    (Path(os.environ["SHARE_MOUNT_PATH"]) / "photos").mkdir(exist_ok=True)
     share = client.post("/api/v1/shares", json={"name": "photos"}, headers=auth).json()
     client.post(
         f"/api/v1/groups/{group['id']}/shares",
@@ -133,39 +136,32 @@ def test_mount_script_access_and_scripts(client, auth, fake_runner):
         headers=auth,
     )
 
-    rw = client.post(
-        "/api/v1/users/bob/mount-script",
-        json={"password": "secret123"},
-        headers=auth,
-    )
+    host = os.environ.get("NAS_HOST", "nas")
+    port = int(os.environ.get("NAS_PORT", "1445"))
+
+    rw = client.get("/api/v1/users/bob/mount-script", headers=auth)
     assert rw.status_code == 200, rw.text
     data = rw.json()
     assert data["username"] == "bob"
+    assert data["host"] == host
+    assert data["port"] == port
     assert data["shares"] == [
-        {"name": "photos", "path": r"\\nas\photos", "access": "RW"}
+        {"name": "photos", "path": rf"\\{host}\photos", "access": "RW"}
     ]
-    assert r"net use Z: \\nas\photos /user:bob secret123" in data["windows_script"]
+    mount_path = f"\\\\{host}\\photos" if port == 445 else "\\\\127.0.0.1\\photos"
+    assert f"net use * {mount_path} /user:bob" in data["windows_script"]
     assert (
-        "mount -t cifs //nas/photos /mnt/photos -o username=bob,password=secret123"
+        f"sudo mount -t cifs //{host}/photos ${{TARGET_DIR}} "
+        f"-o username=bob,password=${{PASWD}},port={port}"
+        ",dir_mode=0755,file_mode=0644"
         in data["linux_script"]
     )
 
-    ro = client.post(
-        "/api/v1/users/alice/mount-script",
-        json={"password": "secret123"},
-        headers=auth,
-    )
+    ro = client.get("/api/v1/users/alice/mount-script", headers=auth)
     assert ro.status_code == 200, ro.text
     assert ro.json()["shares"] == [
-        {"name": "photos", "path": r"\\nas\photos", "access": "RO"}
+        {"name": "photos", "path": rf"\\{host}\photos", "access": "RO"}
     ]
 
-    wrong = client.post(
-        "/api/v1/users/alice/mount-script", json={"password": "nope"}, headers=auth
-    )
-    assert wrong.status_code == 401, wrong.text
-
-    missing = client.post(
-        "/api/v1/users/ghost/mount-script", json={"password": "x"}, headers=auth
-    )
+    missing = client.get("/api/v1/users/ghost/mount-script", headers=auth)
     assert missing.status_code == 404, missing.text
