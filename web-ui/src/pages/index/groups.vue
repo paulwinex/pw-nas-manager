@@ -1,15 +1,30 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center justify-between q-mb-md">
+    <div class="row items-center justify-between q-mb-md q-gutter-sm">
       <div class="text-h5">Groups</div>
-      <q-btn label="Create group" icon="add" color="primary" @click="createOpen = true" />
+      <div class="row items-center q-gutter-sm">
+        <q-checkbox v-model="showPersonal" label="Show personal" />
+        <q-btn label="Create group" icon="add" color="primary" @click="createOpen = true" />
+      </div>
     </div>
 
+    <q-input
+      v-model="nameFilter"
+      label="Filter by name"
+      clearable
+      dense
+      debounce="200"
+      class="q-mb-md"
+      style="max-width: 300px"
+    />
+
     <q-table
-      :rows="groups"
+      :rows="filteredGroups"
       :columns="columns"
       row-key="id"
       :loading="loadingGroups"
+      :pagination="{ rowsPerPage: 50 }"
+      :rows-per-page-options="[10, 25, 50, 100, 0]"
       flat
       bordered
     >
@@ -76,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '@/api';
 import type { GroupOut } from '@/api/types';
@@ -85,6 +100,17 @@ import GroupSharesDialog from '@/components/groups/GroupSharesDialog.vue';
 const $q = useQuasar();
 const groups = ref<GroupOut[]>([]);
 const loadingGroups = ref(false);
+const showPersonal = ref(false);
+const nameFilter = ref('');
+
+const filteredGroups = computed(() => {
+  const needle = nameFilter.value.trim().toLocaleLowerCase();
+  return groups.value.filter((g) => {
+    if (!showPersonal.value && g.is_personal) return false;
+    if (needle && !g.name.toLocaleLowerCase().includes(needle)) return false;
+    return true;
+  });
+});
 
 const columns = [
   { name: 'name', label: 'Name', field: 'name', align: 'left' as const },
