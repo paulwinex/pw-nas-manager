@@ -9,7 +9,7 @@
           <div>
             <div class="text-h6">{{ me?.username }}</div>
             <div class="text-caption text-grey">
-              Administrator · created {{ me ? formatDate(me.created_at) : '…' }}
+              Administrator · created {{ me ? formatDateTime(me.created_at) : '…' }}
             </div>
           </div>
         </div>
@@ -33,7 +33,13 @@
         <q-form @submit="changePassword">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
-              <q-input v-model="pwd.new" label="New password" type="password" outlined />
+              <q-input
+                v-model="pwd.new"
+                label="New password"
+                type="password"
+                outlined
+                @update:model-value="pwd.error = ''"
+              />
             </div>
             <div class="col-12 col-md-4">
               <q-input
@@ -43,6 +49,7 @@
                 outlined
                 :error="!!pwd.error"
                 :error-message="pwd.error"
+                @update:model-value="pwd.error = ''"
               />
             </div>
           </div>
@@ -73,10 +80,6 @@ async function load() {
   }
 }
 
-function formatDate(value: string) {
-  return formatDateTime(value);
-}
-
 function toggleDark(value: boolean) {
   $q.dark.set(value);
   localStorage.setItem('nas.dark', value ? '1' : '0');
@@ -84,6 +87,10 @@ function toggleDark(value: boolean) {
 
 async function changePassword() {
   pwd.value.error = '';
+  if (!pwd.value.new) {
+    pwd.value.error = 'New password is required';
+    return;
+  }
   if (pwd.value.new !== pwd.value.confirm) {
     pwd.value.error = 'Passwords do not match';
     return;
