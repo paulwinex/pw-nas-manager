@@ -110,6 +110,7 @@ async def build_mount_script(
         raise NotFound(f"User '{username}' not found")
 
     host = get_settings().nas_host
+    port = get_settings().nas_port
     target = await sync_engine.compute_target(session)
     shares: list[dict[str, str]] = []
     for name, share in sorted(target.items()):
@@ -130,17 +131,36 @@ async def build_mount_script(
                 f"TARGET_DIR=/mnt/{s['name']}",
                 "mkdir -p ${TARGET_DIR}",
                 f"mount -t cifs //{host}/{s['name']} ${{TARGET_DIR}} "
-                f"-o username={username},password=${{PASWD}}",
+                f"-o username={username},password=${{PASWD}},port={port}"
+                ",dir_mode=0755,file_mode=0644", ""
+            ]
+        )
+
+    if port == 445:
+        windows_script = "\n".join(
+            f"net use * \\\\{host}\\{s['name']} /user:{username}" for s in shares
+        )
+    else:
+        # net use doesn't support a custom SMB port; go through a local portproxy.
+        windows_script = "\n".join(
+            [
+                "# Windows 'net use' does not support a custom SMB port.",
+                "# Run this once as Administrator to forward 127.0.0.1:445 to the NAS:",
+                f"#   netsh interface portproxy add v4tov4 listenport=445 listenaddress=127.0.0.1",
+                f"#     connectport={port} connectaddress={host}",
                 "",
+            ]
+            + [
+                f"net use * \\\\127.0.0.1\\{s['name']} /user:{username}"
+                for s in shares
             ]
         )
 
     return {
         "username": username,
         "host": host,
+        "port": port,
         "shares": shares,
-        "windows_script": "\n".join(
-            f"net use * \\\\{host}\\{s['name']} /user:{username}" for s in shares
-        ),
+        "windows_script": windows_script,
         "linux_script": "\n".join(linux_lines),
     }

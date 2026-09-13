@@ -24,6 +24,7 @@ class SweepResponse(BaseModel):
 
 class ConfigResponse(BaseModel):
     nas_host: str
+    nas_port: int
 
 
 @api_router.get("/health")
@@ -37,7 +38,8 @@ def health() -> dict[str, str]:
     dependencies=[Depends(get_current_admin)],
 )
 def get_config() -> ConfigResponse:
-    return ConfigResponse(nas_host=get_settings().nas_host)
+    settings = get_settings()
+    return ConfigResponse(nas_host=settings.nas_host, nas_port=settings.nas_port)
 
 
 @api_router.post(

@@ -1,5 +1,6 @@
 import client from './client';
 import type {
+  ConfigResponse,
   GroupOut,
   MemberOut,
   MountScriptResponse,
@@ -52,11 +53,14 @@ export const api = {
   // shares
   listShares: () => client.get<ShareOut[]>('/api/v1/shares'),
   availableDirs: () => client.get<string[]>('/api/v1/shares/available'),
-  createShare: (name: string) => client.post<ShareOut>('/api/v1/shares', { name }),
+  createShare: (body: { name: string; path: string; comment: string }) =>
+    client.post<ShareOut>('/api/v1/shares', body),
+  updateShare: (id: string, body: { name: string; path: string; comment: string }) =>
+    client.patch<ShareOut>(`/api/v1/shares/${id}`, body),
   deleteShare: (id: string) => client.delete<void>(`/api/v1/shares/${id}`),
 
   // system
-  config: () => client.get<{ nas_host: string }>('/api/v1/config'),
+  config: () => client.get<ConfigResponse>('/api/v1/config'),
   sync: () => client.post<SyncReport>('/api/v1/sync'),
   sweep: () =>
     client.post<{ processed: number; sync: SyncReport | null }>('/api/v1/expirations/sweep'),

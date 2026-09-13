@@ -37,6 +37,7 @@ class Share(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     name: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     path: Mapped[str] = mapped_column(String(255), unique=True)
+    comment: Mapped[str | None] = mapped_column(String(255), default="")
 
 
 class Group(Base):

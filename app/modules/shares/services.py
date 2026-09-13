@@ -1,9 +1,26 @@
+from pathlib import Path
+
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import Conflict, NotFound
+from app.core.settings import get_settings
 from app.db.models import GroupShare, Share
 from app.modules.samba import os_manager, sync_engine
+
+
+def resolve_share_path(path: str) -> str:
+    """Normalize a share path to an absolute filesystem path.
+
+    Empty or relative paths are resolved against the shares root so existing
+    legacy shares (path == name) keep working.
+    """
+    if not path:
+        return ""
+    p = Path(path)
+    if not p.is_absolute():
+        p = get_settings().share_mount_path / p
+    return str(p)
 
 
 async def list_shares(session: AsyncSession) -> list[Share]:
@@ -12,10 +29,11 @@ async def list_shares(session: AsyncSession) -> list[Share]:
 
 
 async def available_dirs(session: AsyncSession) -> list[str]:
-    registered = set((await session.scalars(select(Share.path))).all())
-    return [
-        name for name in os_manager.scan_share_dirs() if name not in registered
-    ]
+    registered = {
+        resolve_share_path(p)
+        for p in (await session.scalars(select(Share.path))).all()
+    }
+    return [p for p in os_manager.scan_share_dirs() if p not in registered]
 
 
 async def get_share(session: AsyncSession, share_id: str) -> Share:
@@ -25,17 +43,51 @@ async def get_share(session: AsyncSession, share_id: str) -> Share:
     return share
 
 
-async def create_share(session: AsyncSession, name: str) -> Share:
+async def create_share(
+    session: AsyncSession, name: str, path: str = "", comment: str = ""
+) -> Share:
+    resolved = resolve_share_path(path) or resolve_share_path(name)
+
     existing = await session.scalar(
-        select(Share).where((Share.name == name) | (Share.path == name))
+        select(Share).where((Share.name == name) | (Share.path == resolved))
     )
     if existing is not None:
         raise Conflict(f"Share '{name}' already exists")
 
-    await os_manager.ensure_dir(name)
+    await os_manager.ensure_dir(resolved)
 
-    share = Share(name=name, path=name)
+    share = Share(name=name, path=resolved, comment=comment)
     session.add(share)
+    await session.commit()
+
+    await sync_engine.sync(session)
+    return share
+
+
+async def update_share(
+    session: AsyncSession,
+    share_id: str,
+    name: str,
+    path: str,
+    comment: str,
+) -> Share:
+    share = await get_share(session, share_id)
+
+    resolved = resolve_share_path(path) or share.path
+    name = name or share.name
+
+    other = await session.scalar(
+        select(Share).where(
+            (Share.id != share.id)
+            & ((Share.name == name) | (Share.path == resolved))
+        )
+    )
+    if other is not None:
+        raise Conflict(f"Share '{name}' already exists")
+
+    share.name = name
+    share.path = resolved
+    share.comment = comment
     await session.commit()
 
     await sync_engine.sync(session)

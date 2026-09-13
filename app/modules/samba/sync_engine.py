@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -12,6 +13,7 @@ from app.modules.samba import registry_manager
 @dataclass
 class TargetShare:
     path: str
+    comment: str = "NAS Manager"
     valid_users: list[str] = field(default_factory=list)
     write_list: list[str] = field(default_factory=list)
     read_list: list[str] = field(default_factory=list)
@@ -27,6 +29,12 @@ class SyncReport(BaseModel):
 async def compute_target(session: AsyncSession) -> dict[str, TargetShare]:
     settings = get_settings()
     shares = (await session.scalars(select(Share).order_by(Share.name))).all()
+
+    def _abs(path: str) -> str:
+        p = Path(path)
+        if not p.is_absolute():
+            p = settings.share_mount_path / p
+        return str(p)
 
     target: dict[str, TargetShare] = {}
     for share in shares:
@@ -50,7 +58,8 @@ async def compute_target(session: AsyncSession) -> dict[str, TargetShare]:
         read_list = [user for user in valid_users if user not in write_list]
 
         target[share.name] = TargetShare(
-            path=str(settings.share_mount_path / share.path),
+            path=_abs(share.path),
+            comment=share.comment or "NAS Manager",
             valid_users=valid_users,
             write_list=write_list,
             read_list=read_list,
@@ -61,6 +70,7 @@ async def compute_target(session: AsyncSession) -> dict[str, TargetShare]:
 def _desired_params(t: TargetShare) -> dict[str, str]:
     settings = get_settings()
     return {
+        "comment": t.comment,
         "force user": settings.samba_service_user,
         "browseable": "yes",
         "valid users": " ".join(t.valid_users),
@@ -92,10 +102,9 @@ async def sync(session: AsyncSession) -> SyncReport:
         if name not in existing:
             await registry_manager.add_share(name, share_target.path)
             report.added.append(name)
-            params = {"comment": "NAS Manager"} | _desired_params(share_target)
-            for key, value in sorted(params.items()):
+            for key, value in sorted(_desired_params(share_target).items()):
                 await registry_manager.set_parm(name, key, value)
-            report.params_set[name] = sorted(params)
+            report.params_set[name] = sorted(_desired_params(share_target))
             continue
 
         current_params = await registry_manager.show_share(name)

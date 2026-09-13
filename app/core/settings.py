@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     samba_service_user: str = "service-user"
     workgroup: str = "WORKGROUP"
     nas_host: str = "nas"
+    # Host SMB port for mount scripts (matches the published port in compose.yml)
+    nas_port: int = 1445
 
     jwt_secret: str = "change-me-in-dev"
     jwt_ttl_minutes: int = 60

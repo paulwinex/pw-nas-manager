@@ -62,19 +62,42 @@ async def smbpasswd_delete(username: str) -> None:
     await run_command(["smbpasswd", "-x", username])
 
 
+async def list_samba_users() -> list[str]:
+    """Samba passdb users (tdbsam). Survives container re-creates via the volume."""
+    rc, out, _ = await run_command(["pdbedit", "-L"])
+    if rc != 0:
+        return []
+    return [line.split(":", 1)[0] for line in out.splitlines() if line]
+
+
+async def reconcile_samba_users() -> None:
+    """Ensure every samba passdb user has a Unix account.
+
+    /etc/passwd lives inside the container image, so re-creating the container
+    (e.g. `just up` after an image rebuild) loses the useradd accounts while the
+    samba passdb keeps persisting in the samba-state volume. smbd then fails with
+    NT_STATUS_NO_SUCH_USER / getpwnam() failures. Recreate the Unix accounts on boot.
+    """
+    for username in await list_samba_users():
+        if not await user_exists(username):
+            await run_command(["useradd", "-M", "-s", "/usr/sbin/nologin", username])
+
+
 def scan_share_dirs() -> list[str]:
     root = get_settings().share_mount_path
     if not root.is_dir():
         return []
-    return sorted(entry.name for entry in root.iterdir() if entry.is_dir())
+    return sorted(str(root / entry.name) for entry in root.iterdir() if entry.is_dir())
 
 
-async def ensure_dir(name: str) -> Path:
+async def ensure_dir(path: str | Path) -> Path:
     settings = get_settings()
-    path = settings.share_mount_path / name
-    path.mkdir(parents=True, exist_ok=True)
+    p = Path(path)
+    if not p.is_absolute():
+        p = settings.share_mount_path / p
+    p.mkdir(parents=True, exist_ok=True)
     service_user = settings.samba_service_user
-    rc, _, err = await run_command(["chown", f"{service_user}:{service_user}", str(path)])
+    rc, _, err = await run_command(["chown", f"{service_user}:{service_user}", str(p)])
     if rc != 0:
-        raise SambaCommandError(err.strip(), cmd=f"chown {path}")
-    return path
+        raise SambaCommandError(err.strip(), cmd=f"chown {p}")
+    return p

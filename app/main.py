@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -12,6 +13,7 @@ from app.core.settings import get_settings
 from app.db.models import User
 from app.core.security import hash_password
 from app.core.scheduler import start_scheduler, stop_scheduler
+from app.modules.samba import os_manager
 
 
 async def seed_admin() -> None:
@@ -36,6 +38,12 @@ async def seed_admin() -> None:
 async def lifespan(app: FastAPI):
     await init_db()
     await seed_admin()
+    try:
+        await os_manager.reconcile_samba_users()
+    except Exception:
+        logging.getLogger("app.startup").exception(
+            "samba user reconciliation failed, continuing"
+        )
     start_scheduler()
     yield
     stop_scheduler()

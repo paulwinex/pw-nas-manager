@@ -9,8 +9,12 @@
           <q-btn flat round dense icon="refresh" @click="loadConfig" :loading="configLoading" />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <code class="text-subtitle2">{{ nasHost ?? 'unknown' }}</code>
-          <div class="text-caption text-grey q-mt-xs">Set via NAS_HOST in .env (read-only)</div>
+          <code class="text-subtitle2">
+            {{ nasHost ? `${nasHost}:${nasPort}` : 'unknown' }}
+          </code>
+          <div class="text-caption text-grey q-mt-xs">
+            Set via NAS_HOST / NAS_PORT in .env (read-only)
+          </div>
         </q-card-section>
       </q-card>
 
@@ -80,6 +84,7 @@ const $q = useQuasar();
 const health = ref<string | null>(null);
 const healthLoading = ref(false);
 const nasHost = ref<string | null>(null);
+const nasPort = ref<number | null>(null);
 const configLoading = ref(false);
 const syncing = ref(false);
 const syncReport = ref<SyncReport | null>(null);
@@ -103,9 +108,12 @@ async function loadHealth() {
 async function loadConfig() {
   configLoading.value = true;
   try {
-    nasHost.value = (await api.config()).data.nas_host;
+    const data = (await api.config()).data;
+    nasHost.value = data.nas_host;
+    nasPort.value = data.nas_port;
   } catch (e: any) {
     nasHost.value = null;
+    nasPort.value = null;
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load config' });
   } finally {
     configLoading.value = false;

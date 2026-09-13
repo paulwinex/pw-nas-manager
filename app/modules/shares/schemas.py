@@ -5,6 +5,14 @@ NAME_PATTERN = r"^[a-z][a-z0-9_-]{1,31}$"
 
 class ShareCreate(BaseModel):
     name: str = Field(pattern=NAME_PATTERN)
+    path: str = ""
+    comment: str = Field(default="", max_length=255)
+
+
+class ShareUpdate(BaseModel):
+    name: str = Field(pattern=NAME_PATTERN)
+    path: str = ""
+    comment: str = Field(default="", max_length=255)
 
 
 class ShareOut(BaseModel):
@@ -13,3 +21,4 @@ class ShareOut(BaseModel):
     id: str
     name: str
     path: str
+    comment: str | None

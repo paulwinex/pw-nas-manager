@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -31,6 +32,16 @@ async def init_db() -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_migrate)
+
+
+def _migrate(sync_conn) -> None:
+    columns = {
+        row[1]
+        for row in sync_conn.execute(text("PRAGMA table_info(shares)")).fetchall()
+    }
+    if "comment" not in columns:
+        sync_conn.execute(text("ALTER TABLE shares ADD COLUMN comment VARCHAR(255)"))
 
 
 async def get_session() -> AsyncIterator[AsyncSession]:

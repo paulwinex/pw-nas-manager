@@ -24,6 +24,7 @@ class ShareAccess(BaseModel):
 class MountScriptResponse(BaseModel):
     username: str
     host: str
+    port: int
     shares: list[ShareAccess]
     windows_script: str
     linux_script: str

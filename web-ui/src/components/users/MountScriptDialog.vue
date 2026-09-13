@@ -12,48 +12,54 @@
       <q-card-section v-if="loading" class="text-grey">Loading…</q-card-section>
 
       <template v-else-if="result">
-        <q-card-section class="q-pt-none q-gutter-sm">
-          <q-badge
-            v-for="s in result.shares"
-            :key="s.name"
-            color="teal"
-            :label="`${s.name} (${s.path} · ${s.access})`"
-          />
+        <q-card-section v-if="result.shares.length === 0" class="text-negative text-body2">
+          No shares are available for {{ user?.username }}
         </q-card-section>
 
-        <q-tabs v-model="tab" dense align="left" class="q-px-sm">
-          <q-tab name="linux" label="Linux" />
-          <q-tab name="windows" label="Windows" />
-        </q-tabs>
+        <template v-else>
+          <q-card-section class="q-pt-none q-gutter-sm">
+            <q-badge
+              v-for="s in result.shares"
+              :key="s.name"
+              color="teal"
+              :label="`${s.name} (${s.path} · ${s.access})`"
+            />
+          </q-card-section>
 
-        <q-tab-panels v-model="tab" animated>
-          <q-tab-panel name="linux">
-            <div class="row justify-end q-mb-xs">
-              <q-btn
-                flat
-                dense
-                round
-                icon="content_copy"
-                title="Copy"
-                @click="copy(result.linux_script)"
-              />
-            </div>
-            <pre class="script-box"><code>{{ result.linux_script }}</code></pre>
-          </q-tab-panel>
-          <q-tab-panel name="windows">
-            <div class="row justify-end q-mb-xs">
-              <q-btn
-                flat
-                dense
-                round
-                icon="content_copy"
-                title="Copy"
-                @click="copy(result.windows_script)"
-              />
-            </div>
-            <pre class="script-box"><code>{{ result.windows_script }}</code></pre>
-          </q-tab-panel>
-        </q-tab-panels>
+          <q-tabs v-model="tab" dense align="left" class="q-px-sm">
+            <q-tab name="linux" label="Linux" />
+            <q-tab name="windows" label="Windows" />
+          </q-tabs>
+
+          <q-tab-panels v-model="tab" animated>
+            <q-tab-panel name="linux">
+              <div class="row justify-end q-mb-xs">
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="content_copy"
+                  title="Copy"
+                  @click="copy(result.linux_script)"
+                />
+              </div>
+              <pre class="script-box"><code>{{ result.linux_script }}</code></pre>
+            </q-tab-panel>
+            <q-tab-panel name="windows">
+              <div class="row justify-end q-mb-xs">
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="content_copy"
+                  title="Copy"
+                  @click="copy(result.windows_script)"
+                />
+              </div>
+              <pre class="script-box"><code>{{ result.windows_script }}</code></pre>
+            </q-tab-panel>
+          </q-tab-panels>
+        </template>
       </template>
 
       <q-card-section v-else-if="error" class="text-negative">{{ error }}</q-card-section>

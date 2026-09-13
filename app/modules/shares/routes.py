@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.modules.auth.dependencies import get_current_admin
 from app.modules.shares import services
-from app.modules.shares.schemas import ShareCreate, ShareOut
+from app.modules.shares.schemas import ShareCreate, ShareOut, ShareUpdate
 
 router = APIRouter(
     prefix="/shares",
@@ -28,7 +28,15 @@ async def available_dirs(session: AsyncSession = Depends(get_session)) -> list[s
 async def create_share(
     body: ShareCreate, session: AsyncSession = Depends(get_session)
 ) -> ShareOut:
-    share = await services.create_share(session, body.name)
+    share = await services.create_share(session, body.name, body.path, body.comment)
+    return ShareOut.model_validate(share)
+
+
+@router.patch("/{share_id}", response_model=ShareOut)
+async def update_share(
+    share_id: str, body: ShareUpdate, session: AsyncSession = Depends(get_session)
+) -> ShareOut:
+    share = await services.update_share(session, share_id, body.name, body.path, body.comment)
     return ShareOut.model_validate(share)
 
 

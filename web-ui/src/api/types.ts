@@ -24,6 +24,7 @@ export interface ShareOut {
   id: string;
   name: string;
   path: string;
+  comment: string | null;
 }
 
 export interface SyncReport {
@@ -64,6 +65,7 @@ export interface ShareAccess {
 export interface MountScriptResponse {
   username: string;
   host: string;
+  port: number;
   shares: ShareAccess[];
   windows_script: string;
   linux_script: string;
@@ -71,4 +73,5 @@ export interface MountScriptResponse {
 
 export interface ConfigResponse {
   nas_host: string;
+  nas_port: number;
 }
