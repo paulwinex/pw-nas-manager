@@ -69,7 +69,7 @@ After startup the API is available at `http://localhost:8000`, interactive docs 
 
 ### Web UI (web-ui)
 
-- Admin panel: Vue 3 + Quasar 2 in `web-ui/` (English).
+- Admin panel: Vue 3 + Quasar 2 in `web-ui/`.
 - Dev: `just ui-dev` — dev server, `/api` is proxied to `http://localhost:8000` (no CORS needed).
 - Type-check: `just ui-typecheck`. Build: `just ui-build` (output in `web-ui/dist/spa`).
 - Prod: multi-stage build — the UI is built and served by FastAPI at `/`
