@@ -20,7 +20,7 @@
 - Modify: `app/modules/auth/routes.py`
 - Test: `tests/test_auth.py`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tests/test_auth.py`:
 
@@ -38,12 +38,12 @@ def test_me_returns_current_admin(client, auth):
     assert body["id"]
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `docker compose -f deploy/compose.yml --project-directory . run --rm test uv run pytest tests/test_auth.py -k me -v`
 Expected: FAIL — `404 Not Found` (endpoint missing).
 
-- [ ] **Step 3: Implement the endpoint**
+- [x] **Step 3: Implement the endpoint**
 
 In `app/modules/auth/routes.py`, update imports and add the route:
 
@@ -58,17 +58,17 @@ async def me(current: User = Depends(get_current_admin)) -> UserOut:
     return UserOut.model_validate(current)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `docker compose -f deploy/compose.yml --project-directory . run --rm test uv run pytest tests/test_auth.py -k me -v`
 Expected: 2 passed.
 
-- [ ] **Step 5: Run the full backend suite**
+- [x] **Step 5: Run the full backend suite**
 
 Run: `just test`
 Expected: previous 32 + 2 = `34 passed` (all green).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/modules/auth/routes.py tests/test_auth.py
@@ -82,7 +82,7 @@ git commit -m "feat(auth): GET /auth/me for the current admin"
 - Modify: `app/api/v1/router.py`
 - Test: `tests/test_stats.py`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `tests/test_stats.py`:
 
@@ -143,12 +143,12 @@ def test_stats_excludes_far_expiry(client, auth, fake_runner):
     assert body["expiring_memberships"] == []
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `docker compose -f deploy/compose.yml --project-directory . run --rm test uv run pytest tests/test_stats.py -v`
 Expected: FAIL — `404` on `/api/v1/stats`.
 
-- [ ] **Step 3: Implement the stats module**
+- [x] **Step 3: Implement the stats module**
 
 `app/modules/stats/schemas.py`:
 
@@ -299,17 +299,17 @@ from app.modules.stats.routes import router as stats_router
 api_router.include_router(stats_router)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `docker compose -f deploy/compose.yml --project-directory . run --rm test uv run pytest tests/test_stats.py -v`
 Expected: 3 passed.
 
-- [ ] **Step 5: Run the full backend suite**
+- [x] **Step 5: Run the full backend suite**
 
 Run: `just test`
 Expected: `37 passed`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/modules/stats app/api/v1/router.py tests/test_stats.py
@@ -322,7 +322,7 @@ git commit -m "feat(stats): GET /api/v1/stats for the dashboard"
 - Modify: `app/core/settings.py`
 - Modify: `app/main.py`
 
-- [ ] **Step 1: Add `ui_dist_dir` setting**
+- [x] **Step 1: Add `ui_dist_dir` setting**
 
 In `app/core/settings.py`, extend `Settings`:
 
@@ -330,7 +330,7 @@ In `app/core/settings.py`, extend `Settings`:
     ui_dist_dir: Path = Path("./ui-dist")
 ```
 
-- [ ] **Step 2: Mount static files conditionally**
+- [x] **Step 2: Mount static files conditionally**
 
 In `app/main.py`, change imports and `create_app()`:
 
@@ -353,17 +353,17 @@ def create_app() -> FastAPI:
     return app
 ```
 
-- [ ] **Step 3: Verify tests still pass (no dist → no mount)**
+- [x] **Step 3: Verify tests still pass (no dist → no mount)**
 
 Run: `just test`
 Expected: `37 passed` (path `ui-dist` does not exist in the test env → UI not mounted, `/api` untouched).
 
-- [ ] **Step 4: Verify the endpoint list**
+- [x] **Step 4: Verify the endpoint list**
 
 Run: `docker compose -f deploy/compose.yml --project-directory . run --rm test uv run pytest tests/test_auth.py -k me -v`
 Expected: 2 passed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/core/settings.py app/main.py
@@ -378,7 +378,7 @@ git commit -m "feat: serve web-ui dist from FastAPI when present"
 - Modify: `justfile`
 - Modify: `README.md`
 
-- [ ] **Step 1: Multi-stage Dockerfile**
+- [x] **Step 1: Multi-stage Dockerfile**
 
 Rewrite `deploy/Dockerfile`:
 
@@ -423,7 +423,7 @@ EXPOSE 8000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 ```
 
-- [ ] **Step 2: Create `.dockerignore` (repo root)**
+- [x] **Step 2: Create `.dockerignore` (repo root)**
 
 ```gitignore
 .git/
@@ -440,7 +440,7 @@ web-ui/node_modules/
 web-ui/dist/
 ```
 
-- [ ] **Step 3: Add just recipes for the UI**
+- [x] **Step 3: Add just recipes for the UI**
 
 Append to `justfile` (a new section before `# ---------- Clients ----------`):
 
@@ -463,14 +463,14 @@ ui-build:
     yarn build
 ```
 
-- [ ] **Step 4: Rebuild the image and check it still boots**
+- [x] **Step 4: Rebuild the image and check it still boots**
 
 Run: `just build`
 Then: `just up` (or `docker compose -f deploy/compose.yml --project-directory . up -d`)
 Then: `curl -s http://localhost:8000/api/v1/health`
 Expected: `{"status":"ok"}`.
 
-- [ ] **Step 5: Update README**
+- [x] **Step 5: Update README**
 
 In `README.md`, rewrite section 4 (or the run/options part) to include:
 
@@ -485,7 +485,7 @@ In `README.md`, rewrite section 4 (or the run/options part) to include:
 - Логин: `http://localhost:8000` → Sign in (admin/admin123). `/docs` — Swagger как раньше.
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add deploy/Dockerfile .dockerignore justfile README.md
@@ -505,12 +505,12 @@ git commit -m "build: multi-stage Dockerfile builds and serves web-ui"
 - Modify: `web-ui/package.json`, `web-ui/yarn.lock`
 - Create: `web-ui/src/boot/dark.ts`
 
-- [ ] **Step 1: Install axios**
+- [x] **Step 1: Install axios**
 
 Run (workdir `web-ui`): `yarn add axios`
 Expected: axios added to `dependencies` in `package.json` and `yarn.lock` updated.
 
-- [ ] **Step 2: Configure dark theme + proxy in `quasar.config.ts`**
+- [x] **Step 2: Configure dark theme + proxy in `quasar.config.ts`**
 
 In the `framework` block, set config and plugins:
 
@@ -547,7 +547,7 @@ In the `boot:` list:
     ],
 ```
 
-- [ ] **Step 3: Dark persistence boot file**
+- [x] **Step 3: Dark persistence boot file**
 
 Create `web-ui/src/boot/dark.ts`:
 
@@ -562,19 +562,19 @@ export default () => {
 
 > NOTE: use `Dark.set` (the "outside a Vue file" API), NOT `useQuasar()` — `useQuasar()` is `undefined` in a boot-file's non-component context and would crash the app at boot (blank page). `useQuasar` remains available for component SFCs.
 
-- [ ] **Step 4: Verify type-check**
+- [x] **Step 4: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0 (config/boot compile).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web-ui/package.json web-ui/yarn.lock web-ui/quasar.config.ts web-ui/src/boot/dark.ts
 git commit -m "feat(ui): dark theme by default + dev proxy for /api"
 ```
 
-- [ ] **Step 6: Commit the remaining scaffold baseline**
+- [x] **Step 6: Commit the remaining scaffold baseline**
 
 The Quasar scaffold files (`index.html`, `src/App.vue`, `src/router/`, `src/pages/`, `src/css/`, `tsconfig.json`, `env.d.ts`, `postcss.config.js`, `public/`, `.vscode/`, `.gitignore`, `.editorconfig`, `web-ui/README.md`) are only committed here — otherwise a clean checkout cannot build the UI. They should still be committed AFTER the axios/dark change so the first UI commit stays focused:
 
@@ -592,7 +592,7 @@ git commit -m "chore(ui): commit Quasar scaffold baseline"
 - Create: `web-ui/src/api/types.ts`
 - Create: `web-ui/src/api/index.ts`
 
-- [ ] **Step 1: Write API client**
+- [x] **Step 1: Write API client**
 
 `web-ui/src/api/client.ts`:
 
@@ -630,7 +630,7 @@ client.interceptors.response.use(
 export default client;
 ```
 
-- [ ] **Step 2: Write shared types**
+- [x] **Step 2: Write shared types**
 
 `web-ui/src/api/types.ts`:
 
@@ -706,7 +706,7 @@ export interface MountScriptResponse {
 }
 ```
 
-- [ ] **Step 3: Write typed endpoints**
+- [x] **Step 3: Write typed endpoints**
 
 `web-ui/src/api/index.ts`:
 
@@ -776,12 +776,12 @@ export const api = {
 };
 ```
 
-- [ ] **Step 4: Verify type-check**
+- [x] **Step 4: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web-ui/src/api
@@ -795,7 +795,7 @@ git commit -m "feat(ui): typed API client and endpoints"
 - Delete: `web-ui/src/stores/example-store.ts`
 - Modify: `web-ui/src/router/index.ts`
 
-- [ ] **Step 1: Write the auth store**
+- [x] **Step 1: Write the auth store**
 
 Create `web-ui/src/stores/auth.ts`:
 
@@ -848,11 +848,11 @@ export const useAuthStore = defineStore('auth', {
 });
 ```
 
-- [ ] **Step 2: Delete the demo store**
+- [x] **Step 2: Delete the demo store**
 
 Run: `rm web-ui/src/stores/example-store.ts`
 
-- [ ] **Step 3: Add the route guard + 401 handling**
+- [x] **Step 3: Add the route guard + 401 handling**
 
 Rewrite `web-ui/src/router/index.ts`:
 
@@ -914,12 +914,12 @@ export default defineRouter(() => {
 });
 ```
 
-- [ ] **Step 4: Verify type-check**
+- [x] **Step 4: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web-ui/src/stores/auth.ts web-ui/src/router/index.ts
@@ -935,7 +935,7 @@ git commit -m "feat(ui): auth store, route guard and 401 handling"
 - Rewrite: `web-ui/src/css/app.scss`
 - Delete: `web-ui/src/pages/index/second.vue`, `web-ui/src/components/EssentialLink.vue`
 
-- [ ] **Step 1: Create MainLayout**
+- [x] **Step 1: Create MainLayout**
 
 `web-ui/src/layouts/MainLayout.vue`:
 
@@ -1018,7 +1018,7 @@ function logout() {
 </script>
 ```
 
-- [ ] **Step 2: Rewrite the layout root page**
+- [x] **Step 2: Rewrite the layout root page**
 
 `web-ui/src/pages/index.vue`:
 
@@ -1032,7 +1032,7 @@ import MainLayout from '@/layouts/MainLayout.vue';
 </script>
 ```
 
-- [ ] **Step 3: Boxed container helper**
+- [x] **Step 3: Boxed container helper**
 
 `web-ui/src/css/app.scss`:
 
@@ -1044,21 +1044,21 @@ import MainLayout from '@/layouts/MainLayout.vue';
 }
 ```
 
-- [ ] **Step 4: Delete demo files**
+- [x] **Step 4: Delete demo files**
 
 Run:
 ```bash
 rm web-ui/src/pages/index/second.vue web-ui/src/components/EssentialLink.vue
 ```
 
-- [ ] **Step 5: Verify type-check + build**
+- [x] **Step 5: Verify type-check + build**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 Run: `just ui-build`
 Expected: SPA bundles to `web-ui/dist/spa`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web-ui/src/layouts web-ui/src/pages/index.vue web-ui/src/css/app.scss
@@ -1078,7 +1078,7 @@ git commit -m "feat(ui): boxed MainLayout with nav drawer and user menu"
 - Create: `web-ui/src/pages/login.vue`
 - Rewrite: `web-ui/src/pages/index/(index).vue` to a placeholder (Dashboard lands in Task 10)
 
-- [ ] **Step 1: Create the login page**
+- [x] **Step 1: Create the login page**
 
 `web-ui/src/pages/login.vue`:
 
@@ -1181,7 +1181,7 @@ async function onSubmit() {
 </style>
 ```
 
-- [ ] **Step 2: Placeholder dashboard**
+- [x] **Step 2: Placeholder dashboard**
 
 Temporarily replace the contents of `web-ui/src/pages/index/(index).vue` with:
 
@@ -1193,12 +1193,12 @@ Temporarily replace the contents of `web-ui/src/pages/index/(index).vue` with:
 </template>
 ```
 
-- [ ] **Step 3: Verify type-check**
+- [x] **Step 3: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add web-ui/src/pages/login.vue web-ui/src/pages/index/\(index\).vue
@@ -1210,7 +1210,7 @@ git commit -m "feat(ui): login page"
 **Files:**
 - Rewrite: `web-ui/src/pages/index/(index).vue`
 
-- [ ] **Step 1: Implement the dashboard**
+- [x] **Step 1: Implement the dashboard**
 
 Rewrite `web-ui/src/pages/index/(index).vue`:
 
@@ -1323,12 +1323,12 @@ onMounted(load);
 </script>
 ```
 
-- [ ] **Step 2: Verify type-check**
+- [x] **Step 2: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web-ui/src/pages/index/\(index\).vue
@@ -1341,7 +1341,7 @@ git commit -m "feat(ui): dashboard with stats and expiring memberships"
 - Create: `web-ui/src/components/users/UserGroupsDialog.vue`
 - Create: `web-ui/src/components/users/MountScriptDialog.vue`
 
-- [ ] **Step 1: Create `UserGroupsDialog.vue`**
+- [x] **Step 1: Create `UserGroupsDialog.vue`**
 
 ```vue
 <template>
@@ -1538,7 +1538,7 @@ watch(
 </script>
 ```
 
-- [ ] **Step 2: Create `MountScriptDialog.vue`**
+- [x] **Step 2: Create `MountScriptDialog.vue`**
 
 ```vue
 <template>
@@ -1619,12 +1619,12 @@ function reset() {
 </script>
 ```
 
-- [ ] **Step 3: Verify type-check**
+- [x] **Step 3: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add web-ui/src/components/users
@@ -1636,7 +1636,7 @@ git commit -m "feat(ui): user groups and mount-script dialogs"
 **Files:**
 - Create: `web-ui/src/pages/index/users.vue`
 
-- [ ] **Step 1: Implement the Users page**
+- [x] **Step 1: Implement the Users page**
 
 `web-ui/src/pages/index/users.vue`:
 
@@ -1851,12 +1851,12 @@ onMounted(load);
 </script>
 ```
 
-- [ ] **Step 2: Verify type-check**
+- [x] **Step 2: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web-ui/src/pages/index/users.vue
@@ -1868,7 +1868,7 @@ git commit -m "feat(ui): users page with create, password, groups, mount-script,
 **Files:**
 - Create: `web-ui/src/pages/index/groups.vue`
 
-- [ ] **Step 1: Implement the Groups page**
+- [x] **Step 1: Implement the Groups page**
 
 `web-ui/src/pages/index/groups.vue`:
 
@@ -2267,12 +2267,12 @@ onMounted(async () => {
 </script>
 ```
 
-- [ ] **Step 2: Verify type-check**
+- [x] **Step 2: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web-ui/src/pages/index/groups.vue
@@ -2284,7 +2284,7 @@ git commit -m "feat(ui): groups page with members and linked shares"
 **Files:**
 - Create: `web-ui/src/pages/index/shares.vue`
 
-- [ ] **Step 1: Implement the Shares page**
+- [x] **Step 1: Implement the Shares page**
 
 `web-ui/src/pages/index/shares.vue`:
 
@@ -2437,12 +2437,12 @@ onMounted(async () => {
 </script>
 ```
 
-- [ ] **Step 2: Verify type-check**
+- [x] **Step 2: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web-ui/src/pages/index/shares.vue
@@ -2454,7 +2454,7 @@ git commit -m "feat(ui): shares page"
 **Files:**
 - Create: `web-ui/src/pages/index/system.vue`
 
-- [ ] **Step 1: Implement the System page**
+- [x] **Step 1: Implement the System page**
 
 `web-ui/src/pages/index/system.vue`:
 
@@ -2576,12 +2576,12 @@ onMounted(async () => {
 </script>
 ```
 
-- [ ] **Step 2: Verify type-check**
+- [x] **Step 2: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web-ui/src/pages/index/system.vue
@@ -2593,7 +2593,7 @@ git commit -m "feat(ui): system page with sync, sweep, registry"
 **Files:**
 - Create: `web-ui/src/pages/index/profile.vue`
 
-- [ ] **Step 1: Implement the Profile page**
+- [x] **Step 1: Implement the Profile page**
 
 `web-ui/src/pages/index/profile.vue`:
 
@@ -2701,12 +2701,12 @@ onMounted(load);
 </script>
 ```
 
-- [ ] **Step 2: Verify type-check**
+- [x] **Step 2: Verify type-check**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web-ui/src/pages/index/profile.vue
@@ -2722,19 +2722,19 @@ git commit -m "feat(ui): profile page"
 **Files:**
 - (no source changes unless a bug is found)
 
-- [ ] **Step 1: Backend suite**
+- [x] **Step 1: Backend suite**
 
 Run: `just test`
 Expected: `37 passed`.
 
-- [ ] **Step 2: Frontend type-check + build**
+- [x] **Step 2: Frontend type-check + build**
 
 Run: `just ui-typecheck`
 Expected: exit 0.
 Run: `just ui-build`
 Expected: `web-ui/dist/spa` produced without errors.
 
-- [ ] **Step 3: Rebuild the full image and boot**
+- [x] **Step 3: Rebuild the full image and boot**
 
 Run: `just build`
 Run: `just up`
@@ -2745,7 +2745,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/
 ```
 Expected: `{"status":"ok"}` and `200` (index.html served from the SPA).
 
-- [ ] **Step 4: Manual smoke (browser or curl+screenshots)**
+- [x] **Step 4: Manual smoke (browser or curl+screenshots)**
 
 - `http://localhost:8000/` → redirected to `#/login` (no token);
 - Sign in with `admin/admin123` → redirect to Dashboard;
@@ -2759,11 +2759,11 @@ Expected: `{"status":"ok"}` and `200` (index.html served from the SPA).
 - Profile: change own password, toggle dark theme off and back, reload (preference kept);
 - Exit → back to `/login`; open `/` while logged out → redirected to `/login`.
 
-- [ ] **Step 5: Dashboard data check**
+- [x] **Step 5: Dashboard data check**
 
 On Dashboard verify the stat cards and the «Expiring memberships» row for `smoke1` (expiry +3 days).
 
-- [ ] **Step 6: Cleanup & final commit**
+- [x] **Step 6: Cleanup & final commit**
 
 Delete the smoke entities through the UI (or via `curl`), run `just test` once more, and commit any
 fixes:
