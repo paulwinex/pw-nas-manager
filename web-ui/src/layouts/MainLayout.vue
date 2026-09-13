@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR lFf">
-    <q-header elevated class="bg-primary text-white">
+    <q-header class="bg-primary text-white">
       <div class="page-box">
         <q-toolbar>
           <q-btn flat round dense icon="menu" aria-label="Menu" @click="leftOpen = !leftOpen" />
