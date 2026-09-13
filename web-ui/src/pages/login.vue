@@ -2,52 +2,55 @@
   <q-layout class="login-page">
     <q-page-container>
       <q-page class="flex flex-center">
-    <q-card class="login-card" bordered>
-      <q-card-section class="text-center q-pt-xl">
-        <q-icon name="folder_shared" size="56px" color="primary" />
-        <div class="text-h5 q-mt-sm">NAS Manager</div>
-        <div class="text-caption text-grey">Sign in to continue</div>
-      </q-card-section>
+        <q-card class="login-card" bordered flat>
+          <q-card-section class="text-center q-pt-lg q-pb-sm">
+            <q-icon name="folder_shared" size="52px" color="primary" />
+            <div class="text-h5 q-mt-sm">NAS Manager</div>
+            <div class="text-caption text-grey">Sign in to continue</div>
+          </q-card-section>
 
-      <q-card-section>
-        <q-form @submit="onSubmit" class="q-gutter-md">
-          <q-input
-            v-model="username"
-            label="Username"
-            outlined
-            autofocus
-            :disable="loading"
-          />
-          <q-input
-            v-model="password"
-            :type="showPassword ? 'text' : 'password'"
-            label="Password"
-            outlined
-            :disable="loading"
-          >
-            <template v-slot:append>
-              <q-icon
-                :name="showPassword ? 'visibility_off' : 'visibility'"
-                class="cursor-pointer"
-                @click="showPassword = !showPassword"
+          <q-card-section class="q-pt-none">
+            <q-form @submit="onSubmit" class="q-gutter-sm">
+              <q-input
+                v-model="username"
+                label="Username"
+                outlined
+                dense
+                autofocus
+                :disable="loading"
               />
-            </template>
-          </q-input>
+              <q-input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                label="Password"
+                outlined
+                dense
+                :disable="loading"
+              >
+                <template v-slot:append>
+                  <q-icon
+                    :name="showPassword ? 'visibility_off' : 'visibility'"
+                    class="cursor-pointer"
+                    size="sm"
+                    @click="showPassword = !showPassword"
+                  />
+                </template>
+              </q-input>
 
-          <div v-if="error" class="text-negative">{{ error }}</div>
+              <div v-if="error" class="text-negative q-mt-sm">{{ error }}</div>
 
-          <q-btn
-            type="submit"
-            label="Sign in"
-            color="primary"
-            unelevated
-            no-caps
-            class="full-width"
-            :loading="loading"
-          />
-        </q-form>
-      </q-card-section>
-    </q-card>
+              <q-btn
+                type="submit"
+                label="Sign in"
+                color="primary"
+                unelevated
+                no-caps
+                class="full-width q-mt-sm"
+                :loading="loading"
+              />
+            </q-form>
+          </q-card-section>
+        </q-card>
       </q-page>
     </q-page-container>
   </q-layout>
