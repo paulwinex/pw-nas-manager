@@ -11,21 +11,25 @@
     </div>
 
     <template v-if="stats">
-      <div class="row q-col-gutter-md">
-        <q-card v-for="c in cards" :key="c.label" class="col-xs-6 col-md-4 flat bordered">
-          <q-card-section class="text-center">
-            <q-icon :name="c.icon" :color="c.color" size="34px" />
-            <div class="text-h5 q-mt-xs">{{ c.value }}</div>
-            <div class="text-caption text-grey">{{ c.label }}</div>
+      <div class="dash-grid">
+        <q-card v-for="c in cards" :key="c.label" flat bordered class="dash-card">
+          <q-card-section>
+            <div class="text-h6">{{ c.label }}</div>
+          </q-card-section>
+          <q-separator inset />
+          <q-card-section class="q-pt-none row items-center">
+            <q-icon :name="c.icon" :color="c.color" size="32px" class="q-mr-sm" />
+            <span class="text-h4">{{ c.value }}</span>
           </q-card-section>
         </q-card>
       </div>
 
-      <q-card class="q-mt-md flat bordered">
+      <q-card flat bordered class="dash-card dash-card--full">
         <q-card-section>
-          <div class="text-subtitle1">Expiring memberships (next 7 days)</div>
+          <div class="text-h6">Expiring memberships (next 7 days)</div>
         </q-card-section>
-        <q-card-section v-if="stats.expiring_memberships.length === 0" class="text-grey">
+        <q-separator inset />
+        <q-card-section v-if="stats.expiring_memberships.length === 0" class="q-pt-none text-grey">
           None
         </q-card-section>
         <q-markup-table v-else>
@@ -53,11 +57,12 @@
         </q-markup-table>
       </q-card>
 
-      <q-card class="q-mt-md flat bordered">
+      <q-card flat bordered class="dash-card--full">
         <q-card-section>
-          <div class="text-subtitle1">API status</div>
+          <div class="text-h6">API status</div>
         </q-card-section>
-        <q-card-section class="row items-center q-col-gutter-md">
+        <q-separator inset />
+        <q-card-section class="q-pt-none row items-center q-col-gutter-md">
           <q-badge :color="health === 'ok' ? 'positive' : 'negative'">
             {{ health ?? 'unknown' }}
           </q-badge>

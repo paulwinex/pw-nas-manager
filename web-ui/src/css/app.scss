@@ -24,6 +24,21 @@
   min-width: 0;
 }
 
+.dash-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dash-card {
+  flex: 1 1 30%;
+  min-width: 0;
+}
+
+.dash-card--full {
+  flex: 0 0 100%;
+}
+
 .page-sidebar .q-item.router-link-exact-active,
 .page-sidebar .q-item.q-router-link--exact-active,
 .page-sidebar .q-item.q-router-link--active {
