@@ -13,24 +13,13 @@ services:
     env_file: .env
     volumes:
       - ${SHARE_HOST_PATH}:${SHARE_MOUNT_PATH}
-      - ./app:/app/app
       - ./data:/data
-      - samba-state:/var/lib/samba
+      - /data/samba-state:/var/lib/samba
     ports:
       # Web UI / API. Not used for mounting shares.
-      - "8000:8000"
+      - "${APP_PORT:-8000}:8000"
+
       # SMB (cifs/net use): shares are served by smbd INSIDE the container.
       # Published on ${NAS_PORT:-1445} so it doesn't clash with a host samba
       # that already owns 445/139 on the NAS machine.
       - "${NAS_PORT:-1445}:445"
-    networks:
-      nas:
-        aliases:
-          - nas
-
-volumes:
-  samba-state:
-
-networks:
-  nas:
-    name: nas
