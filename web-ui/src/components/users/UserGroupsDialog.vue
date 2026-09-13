@@ -54,6 +54,8 @@
             :options="addableGroups"
             option-label="name"
             option-value="id"
+            emit-value
+            map-options
             label="Group"
             outlined
             dense
@@ -62,6 +64,10 @@
             class="col-3"
             v-model="form.access_level"
             :options="levels"
+            option-label="label"
+            option-value="value"
+            emit-value
+            map-options
             label="Access"
             outlined
             dense
