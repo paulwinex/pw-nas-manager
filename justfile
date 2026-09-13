@@ -17,6 +17,12 @@ help:
 up: build
     {{COMPOSE}} up -d
 
+
+[working-directory: 'deploy']
+ups: build
+    {{COMPOSE}} up
+
+
 ## Stop and remove app container
 [working-directory: 'deploy']
 down:
