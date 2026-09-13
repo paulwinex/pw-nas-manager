@@ -1,5 +1,6 @@
 :root {
-  --q-primary: #1976D2;
+  --q-primary: #3f3f49;
+  --sidebar-active-bg: color-mix(in srgb, var(--q-primary) 50%, #000);
 }
 
 .page-box {
@@ -48,7 +49,7 @@
 .page-sidebar .q-item.q-router-link--exact-active,
 .page-sidebar .q-item.q-router-link--active {
   color: #fff;
-  background: color-mix(in srgb, var(--q-primary) 50%, #000);
+  background: var(--sidebar-active-bg);
 }
 
 .page-sidebar .q-item.router-link-exact-active .q-item__section--avatar,
