@@ -1,5 +1,7 @@
 <template>
-  <q-page class="login-page flex flex-center">
+  <q-layout class="login-page">
+    <q-page-container>
+      <q-page class="flex flex-center">
     <q-card class="login-card" bordered>
       <q-card-section class="text-center q-pt-xl">
         <q-icon name="folder_shared" size="56px" color="primary" />
@@ -46,7 +48,9 @@
         </q-form>
       </q-card-section>
     </q-card>
-  </q-page>
+      </q-page>
+    </q-page-container>
+  </q-layout>
 </template>
 
 <script setup lang="ts">
