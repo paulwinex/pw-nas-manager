@@ -93,6 +93,8 @@
                 class="col-3"
                 v-model="memberForm.access_level"
                 :options="levels"
+                option-label="label"
+                option-value="value"
                 label="Access"
                 outlined
                 dense
