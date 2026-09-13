@@ -17,6 +17,7 @@
           hide-bottom
           dense
           :loading="loading"
+          :table-row-style-fn="rowStyleBody"
         >
           <template v-slot:body-cell-access_level="cell">
             <q-td :props="cell">
@@ -183,6 +184,11 @@ const editingGroupLabel = computed(() => {
   return `Edit membership of ${group?.name ?? editingKey.value}`;
 });
 
+const rowStyleBody = (row: { group_id: string }) =>
+  editingKey.value === row.group_id
+    ? 'background-color: color-mix(in srgb, var(--q-primary) 25%, transparent)'
+    : '';
+
 async function load() {
   if (!props.user) return;
   loading.value = true;
@@ -191,6 +197,7 @@ async function load() {
     const rows: UserMembership[] = [];
     const uid = props.user.id;
     for (const g of groups.value) {
+      if (g.is_personal) continue;
       const members = (await api.listMembers(g.id)).data;
       const mine = members.find((m) => m.user_id === uid);
       if (mine) rows.push({ ...mine, group_name: g.name, group_id: g.id });

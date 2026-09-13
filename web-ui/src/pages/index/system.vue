@@ -25,7 +25,7 @@
           <q-btn flat round dense icon="refresh" @click="loadHealth" :loading="healthLoading" />
         </q-card-section>
         <q-separator inset />
-        <q-card-section class="q-pt-none row items-center q-col-gutter-md">
+        <q-card-section class="q-pt-none">
           <q-badge :color="health === 'ok' ? 'positive' : 'negative'">
             {{ health ?? 'unknown' }}
           </q-badge>
@@ -37,7 +37,7 @@
           <div class="text-h6">Registry sync</div>
         </q-card-section>
         <q-separator inset />
-        <q-card-section class="q-pt-none">
+        <q-card-section class="q-pt-sm">
           <q-btn label="Sync now" icon="sync" color="primary" :loading="syncing" @click="runSync" />
           <pre v-if="syncReport" class="q-mt-sm">{{ JSON.stringify(syncReport, null, 2) }}</pre>
         </q-card-section>
@@ -48,11 +48,11 @@
           <div class="text-h6">Membership sweep</div>
         </q-card-section>
         <q-separator inset />
-        <q-card-section class="q-pt-none">
+        <q-card-section class="q-pt-sm">
           <q-btn
             label="Sweep now"
             icon="cleaning_services"
-            color="warning"
+            color="primary"
             :loading="sweeping"
             @click="runSweep"
           />

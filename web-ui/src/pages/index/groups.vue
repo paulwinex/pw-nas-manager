@@ -1,9 +1,9 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center justify-between q-mb-md q-gutter-sm">
+    <div class="row items-center justify-between q-mb-md">
       <div class="text-h5">Groups</div>
       <div class="row items-center q-gutter-sm">
-        <q-checkbox v-model="showPersonal" label="Show personal" />
+        <q-checkbox v-model="showPersonal" label="Show personal" dense />
         <q-btn label="Create group" icon="add" color="primary" @click="createOpen = true" />
       </div>
     </div>

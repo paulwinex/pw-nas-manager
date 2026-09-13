@@ -28,19 +28,6 @@ services:
         aliases:
           - nas
 
-  test:
-    image: nas-manager:dev
-    profiles: ["tools"]
-    privileged: true
-    env_file: .env
-    working_dir: /app
-    entrypoint: []
-    volumes:
-      - ./app:/app/app
-      - ./tests:/app/tests
-      - ./pyproject.toml:/app/pyproject.toml
-    command: uv run pytest -q
-
 volumes:
   samba-state:
 

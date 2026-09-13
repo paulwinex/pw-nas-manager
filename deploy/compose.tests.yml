@@ -1,0 +1,20 @@
+# Standalone test environment (unit tests only).
+# Deliberately NOT attached to the main `nas` network and does not touch
+# the app service: tests run in-process via FastAPI TestClient against a
+# throwaway sqlite DB and temp share root (see tests/conftest.py), so they
+# need no Samba, no mount paths and no shared volumes with the app.
+name: nas-manager-tests
+
+services:
+  test:
+    image: nas-manager:dev
+    privileged: true
+    env_file: .env
+    working_dir: /app
+    network_mode: none
+    entrypoint: []
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+    command: uv run pytest -q

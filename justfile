@@ -2,6 +2,8 @@
 set shell := ["bash", "-c"]
 
 COMPOSE := "docker compose -f compose.yml --project-directory .."
+# Standalone test compose: isolated from the app service and the `nas` network
+TEST_COMPOSE := "docker compose -f compose.tests.yml --project-directory .."
 CLIENT_PREFIX := "ss-client"
 
 default: help
@@ -42,10 +44,10 @@ restart:
 logs:
     {{COMPOSE}} logs -f app
 
-## Run unit tests in a one-off container
+## Run unit tests in a one-off container (own compose, no shared network)
 [working-directory: 'deploy']
 test:
-    {{COMPOSE}} run --rm test
+    {{TEST_COMPOSE}} run --rm test
 
 ## Run integration tests against the live app (needs a client up + setup first)
 integration name:
