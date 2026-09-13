@@ -24,9 +24,9 @@
             flat
             round
             dense
-            icon="folder_shared"
-            color="primary"
-            title="Shares"
+            icon="edit"
+            color="grey-7"
+            title="Edit"
             @click="openShares(cell.row)"
           />
           <q-btn
