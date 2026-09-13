@@ -5,7 +5,26 @@
       <q-btn label="Create user" icon="add" color="primary" @click="createOpen = true" />
     </div>
 
-    <q-table :rows="users" :columns="columns" row-key="id" :loading="loading" flat bordered>
+    <q-input
+      v-model="nameFilter"
+      label="Filter by name"
+      clearable
+      dense
+      debounce="200"
+      class="q-mb-md"
+      style="max-width: 300px"
+    />
+
+    <q-table
+      :rows="filteredUsers"
+      :columns="columns"
+      row-key="id"
+      :loading="loading"
+      :pagination="{ rowsPerPage: 50 }"
+      :rows-per-page-options="[10, 25, 50, 100, 0]"
+      flat
+      bordered
+    >
       <template v-slot:body-cell-is_admin="cell">
         <q-td :props="cell">
           <q-badge :color="cell.value ? 'orange' : 'blue-grey'" :label="cell.value ? 'admin' : 'user'" />
@@ -92,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '@/api';
 import { formatDateTime } from '@/utils/dates';
@@ -103,6 +122,13 @@ import MountScriptDialog from '@/components/users/MountScriptDialog.vue';
 const $q = useQuasar();
 const users = ref<UserOut[]>([]);
 const loading = ref(false);
+const nameFilter = ref('');
+
+const filteredUsers = computed(() => {
+  const needle = nameFilter.value.trim().toLocaleLowerCase();
+  if (!needle) return users.value;
+  return users.value.filter((u) => u.username.toLocaleLowerCase().includes(needle));
+});
 const selected = ref<UserOut | null>(null);
 
 const columns = [

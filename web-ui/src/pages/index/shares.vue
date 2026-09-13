@@ -5,7 +5,26 @@
       <q-btn label="Create share" icon="add" color="primary" @click="openCreate" />
     </div>
 
-    <q-table :rows="shares" :columns="columns" row-key="id" :loading="loading" flat bordered>
+    <q-input
+      v-model="nameFilter"
+      label="Filter by name"
+      clearable
+      dense
+      debounce="200"
+      class="q-mb-md"
+      style="max-width: 300px"
+    />
+
+    <q-table
+      :rows="filteredShares"
+      :columns="columns"
+      row-key="id"
+      :loading="loading"
+      :pagination="{ rowsPerPage: 50 }"
+      :rows-per-page-options="[10, 25, 50, 100, 0]"
+      flat
+      bordered
+    >
       <template v-slot:body-cell-actions="cell">
         <q-td :props="cell" class="text-right">
           <q-btn
@@ -89,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '@/api';
 import type { ShareOut } from '@/api/types';
@@ -99,6 +118,13 @@ const shares = ref<ShareOut[]>([]);
 const dirs = ref<string[]>([]);
 const pathOptions = ref<string[]>([]);
 const loading = ref(false);
+const nameFilter = ref('');
+
+const filteredShares = computed(() => {
+  const needle = nameFilter.value.trim().toLocaleLowerCase();
+  if (!needle) return shares.value;
+  return shares.value.filter((s) => s.name.toLocaleLowerCase().includes(needle));
+});
 
 const dialogOpen = ref(false);
 const editing = ref(false);
