@@ -12,7 +12,7 @@
 
     <template v-if="stats">
       <div class="row q-col-gutter-md">
-        <q-card v-for="c in cards" :key="c.label" class="col-xs-6 col-md-4 col-xl-2">
+        <q-card v-for="c in cards" :key="c.label" class="col-xs-6 col-md-4 flat bordered">
           <q-card-section class="text-center">
             <q-icon :name="c.icon" :color="c.color" size="34px" />
             <div class="text-h5 q-mt-xs">{{ c.value }}</div>
@@ -21,7 +21,7 @@
         </q-card>
       </div>
 
-      <q-card class="q-mt-md">
+      <q-card class="q-mt-md flat bordered">
         <q-card-section>
           <div class="text-subtitle1">Expiring memberships (next 7 days)</div>
         </q-card-section>
@@ -53,7 +53,7 @@
         </q-markup-table>
       </q-card>
 
-      <q-card class="q-mt-md">
+      <q-card class="q-mt-md flat bordered">
         <q-card-section>
           <div class="text-subtitle1">API status</div>
         </q-card-section>
