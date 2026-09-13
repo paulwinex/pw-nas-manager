@@ -4,6 +4,17 @@
 
     <div class="row q-col-gutter-md">
       <q-card class="col-12 col-md-4">
+        <q-card-section class="row items-center justify-between q-pb-sm">
+          <div class="text-subtitle1">NAS host</div>
+          <q-btn flat round dense icon="refresh" @click="loadConfig" :loading="configLoading" />
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <code class="text-subtitle2">{{ nasHost ?? 'unknown' }}</code>
+          <div class="text-caption text-grey q-mt-xs">Set via NAS_HOST in .env (read-only)</div>
+        </q-card-section>
+      </q-card>
+
+      <q-card class="col-12 col-md-4">
         <q-card-section>
           <div class="text-subtitle1">API health</div>
         </q-card-section>
@@ -68,6 +79,8 @@ import type { RegistryState, SyncReport } from '@/api/types';
 const $q = useQuasar();
 const health = ref<string | null>(null);
 const healthLoading = ref(false);
+const nasHost = ref<string | null>(null);
+const configLoading = ref(false);
 const syncing = ref(false);
 const syncReport = ref<SyncReport | null>(null);
 const sweeping = ref(false);
@@ -84,6 +97,18 @@ async function loadHealth() {
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load health' });
   } finally {
     healthLoading.value = false;
+  }
+}
+
+async function loadConfig() {
+  configLoading.value = true;
+  try {
+    nasHost.value = (await api.config()).data.nas_host;
+  } catch (e: any) {
+    nasHost.value = null;
+    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load config' });
+  } finally {
+    configLoading.value = false;
   }
 }
 
@@ -121,6 +146,6 @@ async function loadRegistry() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadHealth(), loadRegistry()]);
+  await Promise.all([loadHealth(), loadConfig(), loadRegistry()]);
 });
 </script>

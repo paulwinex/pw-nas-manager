@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     db_path: str = "/data/app.db"
     samba_service_user: str = "service-user"
     workgroup: str = "WORKGROUP"
+    nas_host: str = "nas"
 
     jwt_secret: str = "change-me-in-dev"
     jwt_ttl_minutes: int = 60

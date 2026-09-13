@@ -4,19 +4,15 @@
     @update:model-value="(v: boolean) => emits('update:modelValue', v)"
     @hide="reset"
   >
-    <q-card style="min-width: 640px; max-width: 95vw">
+    <q-card style="min-width: 720px; max-width: 95vw">
       <q-card-section>
         <div class="text-subtitle1">Mount script for {{ user?.username }}</div>
       </q-card-section>
 
-      <q-card-section v-if="!result">
-        <q-input v-model="password" label="User password" type="password" outlined autofocus />
-        <q-btn label="Generate" color="primary" class="q-mt-md" :loading="loading" @click="generate" />
-        <div v-if="error" class="text-negative q-mt-sm">{{ error }}</div>
-      </q-card-section>
+      <q-card-section v-if="loading" class="text-grey">Loading…</q-card-section>
 
-      <template v-else>
-        <q-card-section class="q-gutter-sm">
+      <template v-else-if="result">
+        <q-card-section class="q-pt-none q-gutter-sm">
           <q-badge
             v-for="s in result.shares"
             :key="s.name"
@@ -24,25 +20,53 @@
             :label="`${s.name} (${s.path} · ${s.access})`"
           />
         </q-card-section>
-        <q-card-section>
-          <div class="text-subtitle2 q-mb-sm">Windows</div>
-          <q-input type="textarea" readonly :model-value="result.windows_script" rows="6" />
-        </q-card-section>
-        <q-card-section>
-          <div class="text-subtitle2 q-mb-sm">Linux</div>
-          <q-input type="textarea" readonly :model-value="result.linux_script" rows="8" />
-        </q-card-section>
+
+        <q-tabs v-model="tab" dense align="left" class="q-px-sm">
+          <q-tab name="linux" label="Linux" />
+          <q-tab name="windows" label="Windows" />
+        </q-tabs>
+
+        <q-tab-panels v-model="tab" animated>
+          <q-tab-panel name="linux">
+            <div class="row justify-end q-mb-xs">
+              <q-btn
+                flat
+                dense
+                round
+                icon="content_copy"
+                title="Copy"
+                @click="copy(result.linux_script)"
+              />
+            </div>
+            <pre class="script-box"><code>{{ result.linux_script }}</code></pre>
+          </q-tab-panel>
+          <q-tab-panel name="windows">
+            <div class="row justify-end q-mb-xs">
+              <q-btn
+                flat
+                dense
+                round
+                icon="content_copy"
+                title="Copy"
+                @click="copy(result.windows_script)"
+              />
+            </div>
+            <pre class="script-box"><code>{{ result.windows_script }}</code></pre>
+          </q-tab-panel>
+        </q-tab-panels>
       </template>
 
+      <q-card-section v-else-if="error" class="text-negative">{{ error }}</q-card-section>
+
       <q-card-actions align="right">
-        <q-btn flat label="Close" v-close-popup @click="reset" />
+        <q-btn flat label="Close" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '@/api';
 import type { MountScriptResponse, UserOut } from '@/api/types';
@@ -51,27 +75,56 @@ const props = defineProps<{ modelValue: boolean; user: UserOut | null }>();
 const emits = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>();
 
 const $q = useQuasar();
-const password = ref('');
 const loading = ref(false);
 const error = ref('');
 const result = ref<MountScriptResponse | null>(null);
+const tab = ref('linux');
 
-async function generate() {
+async function load() {
   if (!props.user) return;
   loading.value = true;
   error.value = '';
   try {
-    result.value = (await api.mountScript(props.user.username, password.value)).data;
+    result.value = (await api.mountScript(props.user.username)).data;
   } catch (e: any) {
-    error.value = e?.response?.data?.detail ?? 'Failed to generate script';
+    error.value = e?.response?.data?.detail ?? 'Failed to load mount script';
   } finally {
     loading.value = false;
   }
 }
 
+async function copy(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    $q.notify({ type: 'positive', message: 'Copied to clipboard' });
+  } catch {
+    $q.notify({ type: 'negative', message: 'Copy failed' });
+  }
+}
+
 function reset() {
   result.value = null;
-  password.value = '';
   error.value = '';
+  tab.value = 'linux';
 }
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) load();
+  }
+);
 </script>
+
+<style scoped>
+.script-box {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.55;
+}
+</style>

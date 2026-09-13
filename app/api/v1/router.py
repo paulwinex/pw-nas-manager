@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.core.settings import get_settings
 from app.modules.auth.dependencies import get_current_admin
 from app.modules.auth.routes import router as auth_router
 from app.modules.groups.routes import router as groups_router
@@ -21,9 +22,22 @@ class SweepResponse(BaseModel):
     sync: SyncReport | None
 
 
+class ConfigResponse(BaseModel):
+    nas_host: str
+
+
 @api_router.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@api_router.get(
+    "/config",
+    response_model=ConfigResponse,
+    dependencies=[Depends(get_current_admin)],
+)
+def get_config() -> ConfigResponse:
+    return ConfigResponse(nas_host=get_settings().nas_host)
 
 
 @api_router.post(

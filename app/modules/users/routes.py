@@ -5,7 +5,6 @@ from app.core.database import get_session
 from app.modules.auth.dependencies import get_current_admin
 from app.modules.users import services
 from app.modules.users.schemas import (
-    MountScriptRequest,
     MountScriptResponse,
     PasswordChange,
     UserCreate,
@@ -58,11 +57,10 @@ async def delete_user(
     await services.delete_user(session, user_id)
 
 
-@router.post("/{username}/mount-script", response_model=MountScriptResponse)
+@router.get("/{username}/mount-script", response_model=MountScriptResponse)
 async def mount_script(
     username: str,
-    body: MountScriptRequest,
     session: AsyncSession = Depends(get_session),
 ) -> MountScriptResponse:
-    data = await services.build_mount_script(session, username, body.password)
+    data = await services.build_mount_script(session, username)
     return MountScriptResponse.model_validate(data)

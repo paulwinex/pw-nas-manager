@@ -15,10 +15,6 @@ class PasswordChange(BaseModel):
     new_password: str
 
 
-class MountScriptRequest(BaseModel):
-    password: str
-
-
 class ShareAccess(BaseModel):
     name: str
     path: str
@@ -27,6 +23,7 @@ class ShareAccess(BaseModel):
 
 class MountScriptResponse(BaseModel):
     username: str
+    host: str
     shares: list[ShareAccess]
     windows_script: str
     linux_script: str

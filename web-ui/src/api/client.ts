@@ -21,8 +21,7 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    const isMountScript = error?.config?.url?.includes('/mount-script') ?? false;
-    if (error?.response?.status === 401 && onUnauthorized && !isMountScript) {
+    if (error?.response?.status === 401 && onUnauthorized) {
       onUnauthorized();
     }
     return Promise.reject(error);

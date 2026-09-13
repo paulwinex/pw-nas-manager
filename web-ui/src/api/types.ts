@@ -63,7 +63,12 @@ export interface ShareAccess {
 
 export interface MountScriptResponse {
   username: string;
+  host: string;
   shares: ShareAccess[];
   windows_script: string;
   linux_script: string;
+}
+
+export interface ConfigResponse {
+  nas_host: string;
 }

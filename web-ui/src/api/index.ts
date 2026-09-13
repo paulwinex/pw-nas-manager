@@ -29,8 +29,8 @@ export const api = {
   changeUserPassword: (id: string, newPassword: string) =>
     client.post<UserOut>(`/api/v1/users/${id}/password`, { new_password: newPassword }),
   deleteUser: (id: string) => client.delete<void>(`/api/v1/users/${id}`),
-  mountScript: (username: string, password: string) =>
-    client.post<MountScriptResponse>(`/api/v1/users/${username}/mount-script`, { password }),
+  mountScript: (username: string) =>
+    client.get<MountScriptResponse>(`/api/v1/users/${username}/mount-script`),
 
   // groups
   listGroups: () => client.get<GroupOut[]>('/api/v1/groups'),
@@ -56,6 +56,7 @@ export const api = {
   deleteShare: (id: string) => client.delete<void>(`/api/v1/shares/${id}`),
 
   // system
+  config: () => client.get<{ nas_host: string }>('/api/v1/config'),
   sync: () => client.post<SyncReport>('/api/v1/sync'),
   sweep: () =>
     client.post<{ processed: number; sync: SyncReport | null }>('/api/v1/expirations/sweep'),
