@@ -23,6 +23,11 @@ def resolve_share_path(path: str) -> str:
     return str(p)
 
 
+def _ensure_path_exists(resolved: str) -> None:
+    if not Path(resolved).is_dir():
+        raise NotFound(f"Path '{resolved}' does not exist")
+
+
 async def list_shares(session: AsyncSession) -> list[Share]:
     result = await session.scalars(select(Share).order_by(Share.name))
     return list(result.all())
@@ -54,7 +59,7 @@ async def create_share(
     if existing is not None:
         raise Conflict(f"Share '{name}' already exists")
 
-    await os_manager.ensure_dir(resolved)
+    _ensure_path_exists(resolved)
 
     share = Share(name=name, path=resolved, comment=comment)
     session.add(share)
@@ -84,6 +89,8 @@ async def update_share(
     )
     if other is not None:
         raise Conflict(f"Share '{name}' already exists")
+
+    _ensure_path_exists(resolved)
 
     share.name = name
     share.path = resolved

@@ -88,16 +88,3 @@ def scan_share_dirs() -> list[str]:
     if not root.is_dir():
         return []
     return sorted(str(root / entry.name) for entry in root.iterdir() if entry.is_dir())
-
-
-async def ensure_dir(path: str | Path) -> Path:
-    settings = get_settings()
-    p = Path(path)
-    if not p.is_absolute():
-        p = settings.share_mount_path / p
-    p.mkdir(parents=True, exist_ok=True)
-    service_user = settings.samba_service_user
-    rc, _, err = await run_command(["chown", f"{service_user}:{service_user}", str(p)])
-    if rc != 0:
-        raise SambaCommandError(err.strip(), cmd=f"chown {p}")
-    return p
