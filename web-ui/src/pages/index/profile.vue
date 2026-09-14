@@ -2,13 +2,13 @@
   <q-page class="q-pa-md">
     <div class="text-h5 q-mb-md">Profile</div>
 
-    <q-card class="q-mb-md">
+    <q-card class="q-mb-md" flat bordered>
       <q-card-section>
-        <div class="row items-center q-col-gutter-md">
+        <div class="row items-center">
           <q-avatar color="primary" text-color="white" size="56px" icon="person" />
           <div>
-            <div class="text-h6">{{ me?.username }}</div>
-            <div class="text-caption text-grey">
+            <div class="text-h6 q-ml-sm">{{ me?.username }}</div>
+            <div class="text-caption text-grey q-ml-sm">
               Administrator · created {{ me ? formatDateTime(me.created_at) : '…' }}
             </div>
           </div>
@@ -16,7 +16,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card class="q-mb-md">
+    <q-card class="q-mb-md" flat bordered>
       <q-card-section>
         <div class="text-subtitle1">Appearance</div>
       </q-card-section>
@@ -25,7 +25,7 @@
       </q-card-section>
     </q-card>
 
-    <q-card>
+    <q-card flat bordered>
       <q-card-section>
         <div class="text-subtitle1">Change password</div>
       </q-card-section>
