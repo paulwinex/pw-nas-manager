@@ -153,7 +153,7 @@ def test_mount_script_access_and_scripts(client, auth, fake_runner):
     assert (
         f"sudo mount -t cifs //{host}/photos ${{TARGET_DIR}} "
         f"-o username=bob,password=${{PASWD}},port={port}"
-        ",dir_mode=0755,file_mode=0644"
+        ",uid=$(id -u),gid=$(id -g),dir_mode=0755,file_mode=0644"
         in data["linux_script"]
     )
 

@@ -132,7 +132,7 @@ async def build_mount_script(
                 "sudo mkdir -p ${TARGET_DIR}",
                 f"sudo mount -t cifs //{host}/{s['name']} ${{TARGET_DIR}} "
                 f"-o username={username},password=${{PASWD}},port={port}"
-                ",dir_mode=0755,file_mode=0644", ""
+                ",uid=$(id -u),gid=$(id -g),dir_mode=0755,file_mode=0644", ""
             ]
         )
 
