@@ -35,6 +35,7 @@
             <div class="col-12 col-md-4">
               <q-input
                 v-model="pwd.new"
+                dense
                 label="New password"
                 type="password"
                 outlined
@@ -44,6 +45,7 @@
             <div class="col-12 col-md-4">
               <q-input
                 v-model="pwd.confirm"
+                dense
                 label="Confirm"
                 type="password"
                 outlined
