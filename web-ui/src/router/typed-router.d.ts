@@ -37,22 +37,11 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       Record<never, never>,
       | '//(index)'
-      | '//groups'
       | '//profile'
-      | '//shares'
-      | '//system'
-      | '//users'
     >,
     '//(index)': RouteRecordInfo<
       '//(index)',
       '/',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '//groups': RouteRecordInfo<
-      '//groups',
-      '/groups',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -64,32 +53,46 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '//shares': RouteRecordInfo<
-      '//shares',
-      '/shares',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '//system': RouteRecordInfo<
-      '//system',
-      '/system',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '//users': RouteRecordInfo<
-      '//users',
-      '/users',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
     '/[...path]': RouteRecordInfo<
       '/[...path]',
       '/:path(.*)',
       { path: ParamValue<true> },
       { path: ParamValue<false> },
+      | never
+    >,
+    '/admin/(index)': RouteRecordInfo<
+      '/admin/(index)',
+      '/admin',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/groups': RouteRecordInfo<
+      '/admin/groups',
+      '/admin/groups',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/shares': RouteRecordInfo<
+      '/admin/shares',
+      '/admin/shares',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/system': RouteRecordInfo<
+      '/admin/system',
+      '/admin/system',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/admin/users': RouteRecordInfo<
+      '/admin/users',
+      '/admin/users',
+      Record<never, never>,
+      Record<never, never>,
       | never
     >,
     '/login': RouteRecordInfo<
@@ -116,11 +119,7 @@ declare module 'vue-router/auto-routes' {
       routes:
         | '/'
         | '//(index)'
-        | '//groups'
         | '//profile'
-        | '//shares'
-        | '//system'
-        | '//users'
       views:
         | 'default'
       pathParamNames:
@@ -134,41 +133,9 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
-    'src/pages/index/groups.vue': {
-      routes:
-        | '//groups'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
     'src/pages/index/profile.vue': {
       routes:
         | '//profile'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/index/shares.vue': {
-      routes:
-        | '//shares'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/index/system.vue': {
-      routes:
-        | '//system'
-      views:
-        | never
-      pathParamNames:
-        | never
-    }
-    'src/pages/index/users.vue': {
-      routes:
-        | '//users'
       views:
         | never
       pathParamNames:
@@ -181,6 +148,46 @@ declare module 'vue-router/auto-routes' {
         | never
       pathParamNames:
         | 'path'
+    }
+    'src/pages/admin/(index).vue': {
+      routes:
+        | '/admin/(index)'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/groups.vue': {
+      routes:
+        | '/admin/groups'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/shares.vue': {
+      routes:
+        | '/admin/shares'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/system.vue': {
+      routes:
+        | '/admin/system'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/users.vue': {
+      routes:
+        | '/admin/users'
+      views:
+        | never
+      pathParamNames:
+        | never
     }
     'src/pages/login.vue': {
       routes:
