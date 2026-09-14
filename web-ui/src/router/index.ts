@@ -48,7 +48,8 @@ export default defineRouter(() => {
     () => {
       useAuthStore().logout();
       Router.push('/login');
-    }
+    },
+    () => useAuthStore().tryRefresh(),
   );
 
   if (import.meta.hot) {

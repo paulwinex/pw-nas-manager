@@ -75,3 +75,16 @@ export interface ConfigResponse {
   nas_host: string;
   nas_port: number;
 }
+
+export interface ShareOutMe {
+  name: string;
+  host: string;
+  port: number;
+  access: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+}

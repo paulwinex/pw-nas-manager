@@ -2,10 +2,12 @@ import client from './client';
 import type {
   ConfigResponse,
   GroupOut,
+  LoginResponse,
   MemberOut,
   MountScriptResponse,
   RegistryState,
   ShareOut,
+  ShareOutMe,
   StatsResponse,
   SyncReport,
   UserOut,
@@ -17,7 +19,7 @@ export const api = {
     const form = new URLSearchParams();
     form.set('username', username);
     form.set('password', password);
-    return client.post<{ access_token: string; token_type: string }>('/api/v1/auth/token', form);
+    return client.post<LoginResponse>('/api/v1/auth/token', form);
   },
   me: () => client.get<UserOut>('/api/v1/auth/me'),
   stats: () => client.get<StatsResponse>('/api/v1/stats'),
@@ -70,4 +72,13 @@ export const api = {
   sweep: () =>
     client.post<{ processed: number; sync: SyncReport | null }>('/api/v1/expirations/sweep'),
   registry: () => client.get<RegistryState>('/api/v1/registry/shares'),
+
+  // self-service
+  meShares: () => client.get<ShareOutMe[]>('/api/v1/users/me/shares'),
+  meMountScript: () => client.get<MountScriptResponse>('/api/v1/users/me/mount-script'),
+  changeMyPassword: (newPassword: string) =>
+    client.post<void>('/api/v1/users/me/password', { new_password: newPassword }),
+  cliUrl: (os: string) => `/api/v1/users/me/cli?os=${os}`,
+  refresh: (refreshToken: string) =>
+    client.post<LoginResponse>('/api/v1/auth/refresh', { refresh_token: refreshToken }),
 };
