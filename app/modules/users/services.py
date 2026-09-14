@@ -102,14 +102,16 @@ async def delete_user(session: AsyncSession, user_id: str) -> None:
     await sync_engine.sync(session)
 
 
-async def list_user_shares(session: AsyncSession, username: str) -> list[dict[str, str]]:
+async def list_user_shares(
+    session: AsyncSession, username: str
+) -> list[dict[str, str | int]]:
     user = await session.scalar(select(User).where(User.username == username))
     if user is None:
         raise NotFound(f"User '{username}' not found")
 
     settings = get_settings()
     target = await sync_engine.compute_target(session)
-    shares = []
+    shares: list[dict[str, str | int]] = []
     for name, share in sorted(target.items()):
         if username not in share.valid_users:
             continue
