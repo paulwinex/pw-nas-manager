@@ -102,22 +102,40 @@ async def delete_user(session: AsyncSession, user_id: str) -> None:
     await sync_engine.sync(session)
 
 
-async def build_mount_script(
-    session: AsyncSession, username: str
-) -> dict[str, object]:
+async def list_user_shares(session: AsyncSession, username: str) -> list[dict[str, str]]:
     user = await session.scalar(select(User).where(User.username == username))
     if user is None:
         raise NotFound(f"User '{username}' not found")
 
-    host = get_settings().nas_host
-    port = get_settings().nas_port
+    settings = get_settings()
     target = await sync_engine.compute_target(session)
-    shares: list[dict[str, str]] = []
+    shares = []
     for name, share in sorted(target.items()):
         if username not in share.valid_users:
             continue
         access = "RW" if username in share.write_list else "RO"
-        shares.append({"name": name, "path": rf"\\{host}\{name}", "access": access})
+        shares.append({
+            "name": name,
+            "host": settings.nas_host,
+            "port": settings.nas_port,
+            "access": access,
+        })
+    return shares
+
+
+async def build_mount_script(
+    session: AsyncSession, username: str
+) -> dict[str, object]:
+    shares_raw = await list_user_shares(session, username)
+
+    settings = get_settings()
+    host = settings.nas_host
+    port = settings.nas_port
+
+    shares = [
+        {"name": s["name"], "path": rf"\\{s['host']}\{s['name']}", "access": s["access"]}
+        for s in shares_raw
+    ]
 
     linux_lines = [
         "#!/usr/bin/env bash",

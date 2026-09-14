@@ -30,6 +30,13 @@ class MountScriptResponse(BaseModel):
     linux_script: str
 
 
+class ShareOutMe(BaseModel):
+    name: str
+    host: str
+    port: int
+    access: str
+
+
 class UserOut(BaseModel):
     model_config = {"from_attributes": True}
 
