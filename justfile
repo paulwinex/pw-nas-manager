@@ -125,3 +125,16 @@ umount-share name dest:
 ## Show current shares in the Samba registry
 smoke-registry:
     docker exec nas-app net conf listshares
+
+# ---------- CLI ----------
+
+## Build CLI for Linux (requires uv + nuitka)
+cli-build-linux:
+	bash cli/build_linux.sh
+
+## Run CLI tests
+cli-test:
+	cd cli && uv run pytest -v
+
+## Build CLI for Windows (run on Windows machine)
+## cli-build-windows: run cli/build_windows.ps1 on Windows
