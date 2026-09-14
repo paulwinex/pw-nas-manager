@@ -1,7 +1,12 @@
-from fastapi import APIRouter, Depends
+import glob
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.core.settings import get_settings
 from app.db.models import User
 from app.modules.auth.dependencies import get_current_user
 from app.modules.users import services
@@ -39,3 +44,25 @@ async def change_my_password(
     session: AsyncSession = Depends(get_session),
 ) -> None:
     await services.change_password(session, current.id, body.new_password)
+
+
+@router.get("/cli")
+async def download_cli(
+    os: str,
+    current: User = Depends(get_current_user),
+) -> FileResponse:
+    settings = get_settings()
+    dist_dir = settings.cli_dist_dir
+    if os == "linux":
+        pattern = str(dist_dir / "nasmanager-linux-*")
+    elif os == "windows":
+        pattern = str(dist_dir / "nasmanager-windows-*")
+    else:
+        raise HTTPException(status_code=400, detail="os must be 'linux' or 'windows'")
+
+    matches = sorted(glob.glob(pattern))
+    if not matches:
+        raise HTTPException(status_code=404, detail="CLI binary not found")
+
+    filepath = Path(matches[-1])
+    return FileResponse(filepath, filename=filepath.name, media_type="application/octet-stream")
