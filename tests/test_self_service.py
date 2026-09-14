@@ -51,6 +51,10 @@ def test_my_password_change(client, auth, fake_runner):
         "/api/v1/auth/login", json={"username": "alice", "password": "newpass"}
     )
     assert login_resp.status_code == 200
+    old_login = client.post(
+        "/api/v1/auth/login", json={"username": "alice", "password": "pass123"}
+    )
+    assert old_login.status_code == 401
 
 
 def test_admin_endpoints_403_for_non_admin(client, auth, fake_runner):
@@ -65,8 +69,33 @@ def test_admin_endpoints_403_for_non_admin(client, auth, fake_runner):
     assert resp.status_code == 403
 
 
-def test_cli_endpoint_404_if_no_binary(client, auth, fake_runner):
+def test_cli_endpoint_404_if_no_binary(client, auth, fake_runner, tmp_path, monkeypatch):
     """Без собранного бинаря /users/me/cli отдаёт 404."""
+    from app.core.settings import get_settings
+
+    monkeypatch.setattr(get_settings(), "cli_dist_dir", tmp_path)
     token = _login_user(client, auth)
     resp = client.get("/api/v1/users/me/cli?os=linux", headers=_auth(token))
     assert resp.status_code == 404
+
+
+def test_cli_endpoint_serves_binary(client, auth, fake_runner, tmp_path, monkeypatch):
+    """При наличии бинаря /users/me/cli отдаёт файл."""
+    from app.core.settings import get_settings
+
+    (tmp_path / "nasmanager-linux-x86_64").write_bytes(b"fake-binary")
+    monkeypatch.setattr(get_settings(), "cli_dist_dir", tmp_path)
+    token = _login_user(client, auth)
+    resp = client.get("/api/v1/users/me/cli?os=linux", headers=_auth(token))
+    assert resp.status_code == 200
+    assert resp.content == b"fake-binary"
+
+
+def test_cli_endpoint_bad_os(client, auth, fake_runner, tmp_path, monkeypatch):
+    """Неизвестная ОС в query параметре отдаёт 400."""
+    from app.core.settings import get_settings
+
+    monkeypatch.setattr(get_settings(), "cli_dist_dir", tmp_path)
+    token = _login_user(client, auth)
+    resp = client.get("/api/v1/users/me/cli?os=macos", headers=_auth(token))
+    assert resp.status_code == 400
