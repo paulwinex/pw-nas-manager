@@ -86,3 +86,44 @@ def test_me_returns_current_admin(client, auth):
     assert body["username"] == "admin"
     assert body["is_admin"] is True
     assert body["id"]
+
+
+def _create_user(client, auth, username="alice", password="pass123"):
+    created = client.post(
+        "/api/v1/users",
+        json={"username": username, "password": password},
+        headers=auth,
+    )
+    assert created.status_code == 201, created.text
+
+
+def test_refresh_token_rotation(client, auth, fake_runner):
+    """Refresh: старый токен инвалидируется, новый работает."""
+    _create_user(client, auth)
+    login_resp = client.post(
+        "/api/v1/auth/login", json={"username": "alice", "password": "pass123"}
+    )
+    refresh = login_resp.json()["refresh_token"]
+
+    r1 = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
+    assert r1.status_code == 200
+    new_refresh = r1.json()["refresh_token"]
+    assert new_refresh != refresh
+
+    r2 = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh})
+    assert r2.status_code == 401
+
+    r3 = client.post("/api/v1/auth/refresh", json={"refresh_token": new_refresh})
+    assert r3.status_code == 200
+
+
+def test_me_non_admin(client, auth, fake_runner):
+    """GET /auth/me работает для обычного пользователя."""
+    _create_user(client, auth)
+    login_resp = client.post(
+        "/api/v1/auth/login", json={"username": "alice", "password": "pass123"}
+    )
+    token = login_resp.json()["access_token"]
+    resp = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+    assert resp.json()["username"] == "alice"
