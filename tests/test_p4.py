@@ -150,12 +150,18 @@ def test_mount_script_access_and_scripts(client, auth, fake_runner):
     ]
     mount_path = f"\\\\{host}\\photos" if port == 445 else "\\\\127.0.0.1\\photos"
     assert f"net use * {mount_path} /user:bob" in data["windows_script"]
+    linux = data["linux_script"]
+    assert 'if [ -n "${MOUNT_ROOT:-}" ]; then' in linux
+    assert 'read -r -p "Mount root path (e.g. /mnt): " MOUNT_ROOT' in linux
+    assert 'sudo mkdir -p "${MOUNT_ROOT}"' in linux
+    assert 'TARGET_DIR="${MOUNT_ROOT}/photos"' in linux
     assert (
-        f"sudo mount -t cifs //{host}/photos ${{TARGET_DIR}} "
+        f'sudo mount -t cifs //{host}/photos "${{TARGET_DIR}}" '
         f"-o username=bob,password=${{PASWD}},port={port}"
         ",uid=$(id -u),gid=$(id -g),dir_mode=0755,file_mode=0644"
-        in data["linux_script"]
+        in linux
     )
+    assert f'echo "Mounted //{host}/photos at ${{TARGET_DIR}}"' in linux
 
     ro = client.get("/api/v1/users/alice/mount-script", headers=auth)
     assert ro.status_code == 200, ro.text

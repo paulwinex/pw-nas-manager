@@ -121,6 +121,18 @@ async def build_mount_script(
 
     linux_lines = [
         "#!/usr/bin/env bash",
+        "# Root directory for all mounts: from MOUNT_ROOT env or mandatory prompt",
+        'if [ -n "${MOUNT_ROOT:-}" ]; then',
+        '  echo "MOUNT_ROOT from environment: ${MOUNT_ROOT}"',
+        "else",
+        '  MOUNT_ROOT=""',
+        '  while [ -z "${MOUNT_ROOT}" ]; do',
+        '    read -r -p "Mount root path (e.g. /mnt): " MOUNT_ROOT',
+        "  done",
+        "fi",
+        'sudo mkdir -p "${MOUNT_ROOT}"',
+        'echo "Mount root: ${MOUNT_ROOT}"',
+        "",
         f'read -r -p "Password for {username}: " PASWD',
         "",
     ]
@@ -128,11 +140,13 @@ async def build_mount_script(
         linux_lines.extend(
             [
                 f"# {s['name']}",
-                f"TARGET_DIR=/mnt/{s['name']}",
-                "sudo mkdir -p ${TARGET_DIR}",
-                f"sudo mount -t cifs //{host}/{s['name']} ${{TARGET_DIR}} "
+                f'TARGET_DIR="${{MOUNT_ROOT}}/{s["name"]}"',
+                'sudo mkdir -p "${TARGET_DIR}"',
+                f'sudo mount -t cifs //{host}/{s["name"]} "${{TARGET_DIR}}" '
                 f"-o username={username},password=${{PASWD}},port={port}"
-                ",uid=$(id -u),gid=$(id -g),dir_mode=0755,file_mode=0644", ""
+                ",uid=$(id -u),gid=$(id -g),dir_mode=0755,file_mode=0644",
+                f'echo "Mounted //{host}/{s["name"]} at ${{TARGET_DIR}}"',
+                "",
             ]
         )
 
