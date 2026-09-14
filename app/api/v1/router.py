@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.settings import get_settings
 from app.modules.auth.dependencies import get_current_admin
+from app.modules.auth.dependencies import get_current_user  # noqa: F401
 from app.modules.auth.routes import router as auth_router
 from app.modules.groups.routes import router as groups_router
 from app.modules.groups.services import sweep_expired_memberships

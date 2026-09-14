@@ -25,6 +25,7 @@ _TABLES = (
     "group_shares",
     "user_groups",
     "user_group_expirations",
+    "refresh_tokens",
 )
 
 

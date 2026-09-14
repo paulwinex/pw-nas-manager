@@ -19,7 +19,7 @@ def test_login_unknown_user_401(client):
     assert response.status_code == 401
 
 
-def test_non_admin_cannot_login(client, auth, fake_runner):
+def test_non_admin_can_login(client, auth, fake_runner):
     created = client.post(
         "/api/v1/users",
         json={"username": "bob", "password": "secret123"},
@@ -28,13 +28,16 @@ def test_non_admin_cannot_login(client, auth, fake_runner):
     assert created.status_code == 201, created.text
 
     response = login(client, username="bob", password="secret123")
-    assert response.status_code == 403
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["access_token"]
+    assert body["refresh_token"]
 
     token_form = client.post(
         "/api/v1/auth/token",
         data={"username": "bob", "password": "secret123"},
     )
-    assert token_form.status_code == 403
+    assert token_form.status_code == 200, token_form.text
 
 
 def test_token_form_endpoint_for_swagger_authorize(client, fake_runner):
