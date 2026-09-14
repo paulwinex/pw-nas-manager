@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -64,13 +64,16 @@ const router = useRouter();
 const auth = useAuthStore();
 const leftOpen = ref(true);
 
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/users', label: 'Users', icon: 'people' },
-  { to: '/shares', label: 'Shares', icon: 'folder_shared' },
-  { to: '/groups', label: 'Groups', icon: 'groups' },
-  { to: '/system', label: 'System', icon: 'settings' },
-];
+const navItems = computed(() => {
+  const items = [
+    { to: '/', label: 'Мои шары', icon: 'folder_shared' },
+    { to: '/profile', label: 'Профиль', icon: 'account_circle' },
+  ];
+  if (auth.isAdmin) {
+    items.push({ to: '/admin', label: 'Админка', icon: 'admin_panel_settings' });
+  }
+  return items;
+});
 
 function measure() {
   if (window.innerWidth < 1024) leftOpen.value = false;

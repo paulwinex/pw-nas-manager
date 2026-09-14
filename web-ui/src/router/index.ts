@@ -36,6 +36,10 @@ export default defineRouter(() => {
         return { path: '/login' };
       }
     }
+    // Admin guard
+    if (to.path.startsWith('/admin') && !auth.isAdmin) {
+      return { path: '/' };
+    }
     return true;
   });
 
