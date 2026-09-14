@@ -43,6 +43,16 @@ def _migrate(sync_conn) -> None:
     if "comment" not in columns:
         sync_conn.execute(text("ALTER TABLE shares ADD COLUMN comment VARCHAR(255)"))
 
+    sync_conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id VARCHAR(36) PRIMARY KEY,
+            user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            token_hash VARCHAR(64) UNIQUE NOT NULL,
+            expires_at DATETIME NOT NULL,
+            created_at DATETIME NOT NULL
+        )
+    """))
+
 
 async def get_session() -> AsyncIterator[AsyncSession]:
     async with SessionLocal() as session:

@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     admin_password: str = "admin123"
 
     expiry_check_interval_seconds: int = 60
+    refresh_ttl_minutes: int = 10080  # 7 days
+    cli_dist_dir: Path = Path("./cli-dist")
 
     ui_dist_dir: Path = Path("./ui-dist")
 

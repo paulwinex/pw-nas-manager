@@ -25,3 +25,16 @@ async def get_current_admin(
     if not user.is_admin:
         raise Forbidden("Admin privileges required")
     return user
+
+
+async def get_current_user(
+    token: str | None = Depends(bearer_scheme),
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    if token is None:
+        raise Unauthorized("Authentication required")
+    subject = decode_access_token(token)
+    user = await session.get(User, subject)
+    if user is None:
+        raise Unauthorized("User no longer exists")
+    return user

@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -46,3 +48,16 @@ def decode_access_token(token: str) -> str:
     except jwt.PyJWTError:
         raise Unauthorized("Invalid or expired token")
     return payload["sub"]
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def create_refresh_token_value() -> str:
+    return secrets.token_urlsafe(48)
+
+
+def create_refresh_token_expiry() -> datetime:
+    settings = get_settings()
+    return datetime.now(timezone.utc) + timedelta(minutes=settings.refresh_ttl_minutes)
