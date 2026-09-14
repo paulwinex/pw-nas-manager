@@ -101,11 +101,31 @@ async function load() {
 
 async function copy(text: string) {
   try {
-    await navigator.clipboard.writeText(text);
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      fallbackCopy(text);
+    }
     $q.notify({ type: 'positive', message: 'Copied to clipboard' });
   } catch {
-    $q.notify({ type: 'negative', message: 'Copy failed' });
+    try {
+      fallbackCopy(text);
+      $q.notify({ type: 'positive', message: 'Copied to clipboard' });
+    } catch {
+      $q.notify({ type: 'negative', message: 'Copy failed' });
+    }
   }
+}
+
+function fallbackCopy(text: string) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
 }
 
 function reset() {
