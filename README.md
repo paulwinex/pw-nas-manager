@@ -22,6 +22,43 @@ Nothing needs to be installed on the host — only Docker.
 - **Mount script** — an endpoint returns ready-to-use mount commands
   (Windows `net use` / Linux `mount -t cifs`) for a specific user.
 
+## Self-Service & CLI
+
+### Веб-интерфейс
+- `/` — «Мои шары»: список доступных шар, кнопки скачивания CLI, ручное подключение.
+- `/profile` — профиль, смена пароля.
+- `/admin` — панель администратора (только для admin-учётных записей).
+
+### CLI `nasmanager`
+Python-пакет с TUI (Textual), собирается в автономный бинарь через Nuitka.
+
+**Установка:**
+- Скачайте бинарь со страницы «Мои шары» в web-интерфейсе.
+- Linux: `chmod +x nasmanager-linux-x86_64 && ./nasmanager-linux-x86_64`
+- Windows: запустите `nasmanager-windows-x86_64.exe`
+
+**Команды TUI:**
+| Клавиша | Действие |
+|---|---|
+| `m` | Mount выбранной шары |
+| `M` | Mount всех новых шар |
+| `u` | Umount выбранной шары |
+| `U` | Umount всех отозванных шар |
+| `p` | Dry-run preview |
+| `s` | Sync (обновить список шар) |
+| `q` | Выход |
+
+**Сборка из исходников:**
+```bash
+just cli-build-linux   # Linux
+# Windows: cli/build_windows.ps1
+```
+
+**Тесты CLI:**
+```bash
+just cli-test
+```
+
 ## Running
 
 Requires Docker (Linux). Samba ports `445/139` are not published to the host — the
