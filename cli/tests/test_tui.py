@@ -38,10 +38,13 @@ async def _mount_scenario() -> tuple[list[str], list[str]]:
             for _ in range(3):
                 await pilot.pause()
             pushed = [s.__class__.__name__ for s in app._screen_stack]
-            await asyncio.sleep(0.7)  # let the auto-close beat pass
-            for _ in range(3):
+            deadline = asyncio.get_event_loop().time() + 5.0
+            while asyncio.get_event_loop().time() < deadline:
+                names = [s.__class__.__name__ for s in app._screen_stack]
+                if names == ["Screen"]:
+                    break
                 await pilot.pause()
-            closed = [s.__class__.__name__ for s in app._screen_stack]
+            closed = names
             return pushed, closed
 
 

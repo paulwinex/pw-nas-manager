@@ -12,7 +12,6 @@ from nasmanager.auth import login_or_refresh
 from nasmanager.config import Config, load_mounts, MountEntry, save_mounts
 from nasmanager.diff import compute_diff, ShareStatus
 from nasmanager.mount_engine import (
-    execute_command,
     is_mounted_linux,
     is_mounted_windows,
     plan_mount,
@@ -132,7 +131,7 @@ class NasManagerApp(App):
         new_shares = [d for d in self.diff_data if d.status == ShareStatus.NEW]
         self.run_worker(self._mount_shares(new_shares))
 
-    async def _mount_shares(self, shares) -> None:
+    async def _mount_shares(self, shares: list[ShareDiff]) -> None:
         if not self.config:
             return
         title = f"Mount {len(shares)} share(s)"
@@ -152,7 +151,7 @@ class NasManagerApp(App):
         revoked = [d for d in self.diff_data if d.status == ShareStatus.REVOKED]
         self.run_worker(self._umount_shares(revoked))
 
-    async def _umount_shares(self, shares) -> None:
+    async def _umount_shares(self, shares: list[ShareDiff]) -> None:
         title = f"Unmount {len(shares)} share(s)"
         screen = MountLogScreen(title)
         self.push_screen(screen)
@@ -160,7 +159,7 @@ class NasManagerApp(App):
         await screen.log_line(f"# {title}")
         await self._with_mount_log(screen, shares, mount=False)
 
-    async def _with_mount_log(self, screen, shares, mount: bool) -> None:
+    async def _with_mount_log(self, screen: MountLogScreen, shares: list[ShareDiff], mount: bool) -> None:
         errors: list[str] = []
         for d in shares:
             await screen.log_line("")

@@ -690,7 +690,6 @@ Expected: FAIL — `"MountLogScreen" in pushed` fails (screen stack still `['Scr
 
 ```python
 from nasmanager.mount_engine import (
-    execute_command,
     is_mounted_linux,
     is_mounted_windows,
     plan_mount,
