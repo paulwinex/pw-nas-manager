@@ -717,24 +717,24 @@ from nasmanager.ui.mountlog import MountLogScreen
         if not self.config:
             return
         title = f"Mount {len(shares)} share(s)"
-        screen = MountLogScreen(title, self.config.username)
+        screen = MountLogScreen(title)
         self.push_screen(screen)
         await screen.wait_ready()
-        await screen.log(f"# {title}")
+        await screen.log_line(f"# {title}")
         await self._with_mount_log(screen, shares, mount=True)
 
     async def _umount_shares(self, shares) -> None:
         title = f"Unmount {len(shares)} share(s)"
-        screen = MountLogScreen(title, self.config.username)
+        screen = MountLogScreen(title)
         self.push_screen(screen)
         await screen.wait_ready()
-        await screen.log(f"# {title}")
+        await screen.log_line(f"# {title}")
         await self._with_mount_log(screen, shares, mount=False)
 
     async def _with_mount_log(self, screen, shares, mount: bool) -> None:
         errors: list[str] = []
         for d in shares:
-            await screen.log("")
+            await screen.log_line("")
             if mount:
                 if not self.config:
                     return
@@ -744,12 +744,12 @@ from nasmanager.ui.mountlog import MountLogScreen
                 )
             else:
                 cmd = plan_umount(d.target)
-            await screen.log(f"$ {' '.join(cmd.command)}")
+            await screen.log_line(f"$ {' '.join(cmd.command)}")
             ok, msg = await run_command_streaming(
-                cmd, screen.ask_password, screen.log, screen.is_cancelled
+                cmd, screen.ask_password, screen.log_line, screen.is_cancelled
             )
             if screen.is_cancelled():
-                await screen.log("Cancelled")
+                await screen.log_line("Cancelled")
                 break
             if ok:
                 if mount:
@@ -765,23 +765,23 @@ from nasmanager.ui.mountlog import MountLogScreen
                     mounts = load_mounts()
                     mounts = [m for m in mounts if m.share != d.name]
                     save_mounts(mounts)
-                await screen.log(f"ok: {d.name}")
+                await screen.log_line(f"ok: {d.name}")
             else:
                 errors.append(f"{d.name}: {msg}")
-                await screen.log(f"error: {d.name}: {msg}")
+                await screen.log_line(f"error: {d.name}: {msg}")
 
         if not errors and not screen.is_cancelled():
-            await screen.log("All done")
+            await screen.log_line("All done")
             await asyncio.sleep(0.6)
             self.pop_screen()
             self._do_sync()
         elif screen.is_cancelled():
-            await screen.log("Cancelled")
+            await screen.log_line("Cancelled")
             await asyncio.sleep(0.4)
             self.pop_screen()
         else:
             screen.set_final()
-            await screen.log("Errors — press any key to close")
+            await screen.log_line("Errors — press any key to close")
 ```
 
 `cli/src/nasmanager/ui/dialogs.py` — remove the `PasswordModal` class (lines 9–36) and its now-unused imports, keeping `LoginModal`:
@@ -845,7 +845,7 @@ git commit -m "feat(cli): mount/umount via streaming log screen; remove Password
 
 1. **Spec coverage:** the spec's four sections map to Task 1 (streaming runner + sudo/net use password handling + cancel), Task 2 (MountLogScreen: log, inline prompt, Ctrl+C), Task 3 (data flow `m/M/u/U` → log, auto-close on success, stay open on errors, cancel closes).
 2. **Placeholder scan:** every code step contains full code; no TBD.
-3. **Type consistency:** `run_command_streaming(command, password_provider, sink, cancelled) -> tuple[bool, str]`; `ask_password(prompt: str) -> str | None`; `log(line: str) -> None`; `is_cancelled() -> bool`; all signatures match across Task 1/Task 2/Task 3 (see `_with_mount_log` call).
+3. **Type consistency:** `run_command_streaming(command, password_provider, sink, cancelled) -> tuple[bool, str]`; `ask_password(prompt: str) -> str | None`; `log_line(line: str) -> None` (renamed from plan's `log` because Textual's `MessagePump` defines a `log` property); `is_cancelled() -> bool`; all signatures match across Task 1/Task 2/Task 3 (see `_with_mount_log` call).
 
 ## Verification
 
