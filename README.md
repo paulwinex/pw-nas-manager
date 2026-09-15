@@ -54,6 +54,11 @@ just cli-build-linux   # Linux
 # Windows: cli/build_windows.ps1
 ```
 
+**Запуск из исходников (без сборки бинаря):**
+```bash
+just cli-run
+```
+
 **Тесты CLI:**
 ```bash
 just cli-test

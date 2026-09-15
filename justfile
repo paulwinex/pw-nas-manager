@@ -136,5 +136,9 @@ cli-build-linux:
 cli-test:
 	cd cli && uv run pytest -v
 
+## Run CLI from source without building a binary (dev)
+cli-run:
+	cd cli && PYTHONPATH=src uv run python -m nasmanager
+
 ## Build CLI for Windows (run on Windows machine)
 ## cli-build-windows: run cli/build_windows.ps1 on Windows
