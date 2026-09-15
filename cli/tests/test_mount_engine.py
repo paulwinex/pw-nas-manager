@@ -194,7 +194,6 @@ def test_streaming_sudo_prompt_provider_none():
 
 
 def test_streaming_spawn_oserror_returns_failure():
-    import subprocess
     from unittest.mock import patch
 
     cmd = MountCommand(description="t", command=["definitely-not-a-binary"], is_mount=True)
