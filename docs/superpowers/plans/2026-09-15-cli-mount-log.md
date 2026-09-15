@@ -450,7 +450,7 @@ class _Host(App):
         self.pw_result = "unset"
 
     def on_mount(self):
-        self.screen_obj = MountLogScreen("Mount 1 share(s)", "alice")
+        self.screen_obj = MountLogScreen("Mount 1 share(s)")
         self.push_screen(self.screen_obj)
         asyncio.get_running_loop().create_task(self._ask())
 
