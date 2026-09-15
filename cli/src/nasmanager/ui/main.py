@@ -124,11 +124,11 @@ class NasManagerApp(App):
         table = self.query_one("#status-table", DataTable)
         cursor = table.cursor_coordinate
         if cursor.row < len(self.diff_data):
-            self._mount_shares([self.diff_data[cursor.row]])
+            self.run_worker(self._mount_shares([self.diff_data[cursor.row]]))
 
     def action_mount_all(self) -> None:
         new_shares = [d for d in self.diff_data if d.status == ShareStatus.NEW]
-        self._mount_shares(new_shares)
+        self.run_worker(self._mount_shares(new_shares))
 
     async def _mount_shares(self, shares) -> None:
         if not self.config:
@@ -160,11 +160,11 @@ class NasManagerApp(App):
         table = self.query_one("#status-table", DataTable)
         cursor = table.cursor_coordinate
         if cursor.row < len(self.diff_data):
-            self._umount_shares([self.diff_data[cursor.row]])
+            self.run_worker(self._umount_shares([self.diff_data[cursor.row]]))
 
     def action_umount_all(self) -> None:
         revoked = [d for d in self.diff_data if d.status == ShareStatus.REVOKED]
-        self._umount_shares(revoked)
+        self.run_worker(self._umount_shares(revoked))
 
     async def _umount_shares(self, shares) -> None:
         for d in shares:

@@ -134,7 +134,7 @@ cli-build-linux:
 
 ## Run CLI tests
 cli-test:
-	cd cli && uv run pytest -v
+	cd cli && uv run --extra dev python -m pytest -v
 
 ## Run CLI from source without building a binary (dev)
 cli-run:
