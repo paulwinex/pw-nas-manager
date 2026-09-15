@@ -18,10 +18,9 @@ class MountLogScreen(Screen):
         Binding("escape", "close_final", "Close"),
     ]
 
-    def __init__(self, title: str, username: str) -> None:
+    def __init__(self, title: str) -> None:
         super().__init__()
         self.title_text = title
-        self.username = username
         self.ready = Event()
         self._cancelled = False
         self._final = False
@@ -40,7 +39,8 @@ class MountLogScreen(Screen):
         self.ready.set()
 
     async def wait_ready(self) -> None:
-        await asyncio.to_thread(self.ready.wait, 5.0)
+        if not await asyncio.to_thread(self.ready.wait, 5.0):
+            raise RuntimeError("MountLogScreen did not mount within 5s")
 
     async def log_line(self, line: str) -> None:
         self.query_one("#mount-log", RichLog).write(line)
@@ -81,7 +81,7 @@ class MountLogScreen(Screen):
         self._final = True
 
     def _pop_if_top(self) -> None:
-        stack = self.app._screen_stack
+        stack = self.app.screen_stack
         if self._final and len(stack) > 1 and stack[-1] is self:
             self.app.pop_screen()
 
@@ -89,5 +89,5 @@ class MountLogScreen(Screen):
         self._pop_if_top()
 
     def on_key(self, event) -> None:
-        if self._final and event.key != "ctrl+c":
+        if self._final:
             self._pop_if_top()
