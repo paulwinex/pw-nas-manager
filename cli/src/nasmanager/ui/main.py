@@ -17,8 +17,10 @@ from nasmanager.mount_engine import (
     is_mounted_windows,
     plan_mount,
     plan_umount,
+    run_command_streaming,
 )
-from nasmanager.ui.dialogs import LoginModal, PasswordModal
+from nasmanager.ui.dialogs import LoginModal
+from nasmanager.ui.mountlog import MountLogScreen
 from nasmanager.ui.wizard import WizardScreen
 
 
@@ -133,28 +135,12 @@ class NasManagerApp(App):
     async def _mount_shares(self, shares) -> None:
         if not self.config:
             return
-        password = await self.push_screen_wait(PasswordModal("Password for sudo/mount:"))
-        if password is None:
-            return
-
-        for d in shares:
-            cmd = plan_mount(
-                d.name, d.host, d.port, self.config.username,
-                self.config.mount_root, self.config.windows_mode,
-            )
-            ok, msg = await asyncio.to_thread(execute_command, cmd, False, password)
-            if ok:
-                entry = MountEntry(
-                    share=d.name,
-                    source_uri=f"//{d.host}/{d.name}",
-                    target=cmd.target,
-                )
-                mounts = load_mounts()
-                mounts.append(entry)
-                save_mounts(mounts)
-            self.query_one("#help-bar", Static).update(f"{d.name}: {'ok' if ok else msg}")
-
-        self._do_sync()
+        title = f"Mount {len(shares)} share(s)"
+        screen = MountLogScreen(title)
+        self.push_screen(screen)
+        await screen.wait_ready()
+        await screen.log_line(f"# {title}")
+        await self._with_mount_log(screen, shares, mount=True)
 
     def action_umount_selected(self) -> None:
         table = self.query_one("#status-table", DataTable)
@@ -167,14 +153,64 @@ class NasManagerApp(App):
         self.run_worker(self._umount_shares(revoked))
 
     async def _umount_shares(self, shares) -> None:
+        title = f"Unmount {len(shares)} share(s)"
+        screen = MountLogScreen(title)
+        self.push_screen(screen)
+        await screen.wait_ready()
+        await screen.log_line(f"# {title}")
+        await self._with_mount_log(screen, shares, mount=False)
+
+    async def _with_mount_log(self, screen, shares, mount: bool) -> None:
+        errors: list[str] = []
         for d in shares:
-            cmd = plan_umount(d.target)
-            ok, msg = await asyncio.to_thread(execute_command, cmd, False)
-            mounts = load_mounts()
-            mounts = [m for m in mounts if m.share != d.name]
-            save_mounts(mounts)
-            self.query_one("#help-bar", Static).update(f"{d.name}: {'umount ok' if ok else msg}")
-        self._do_sync()
+            await screen.log_line("")
+            if mount:
+                if not self.config:
+                    return
+                cmd = plan_mount(
+                    d.name, d.host, d.port, self.config.username,
+                    self.config.mount_root, self.config.windows_mode,
+                )
+            else:
+                cmd = plan_umount(d.target)
+            await screen.log_line(f"$ {' '.join(cmd.command)}")
+            ok, msg = await run_command_streaming(
+                cmd, screen.ask_password, screen.log_line, screen.is_cancelled
+            )
+            if screen.is_cancelled():
+                await screen.log_line("Cancelled")
+                break
+            if ok:
+                if mount:
+                    entry = MountEntry(
+                        share=d.name,
+                        source_uri=f"//{d.host}/{d.name}",
+                        target=cmd.target,
+                    )
+                    mounts = load_mounts()
+                    mounts.append(entry)
+                    save_mounts(mounts)
+                else:
+                    mounts = load_mounts()
+                    mounts = [m for m in mounts if m.share != d.name]
+                    save_mounts(mounts)
+                await screen.log_line(f"ok: {d.name}")
+            else:
+                errors.append(f"{d.name}: {msg}")
+                await screen.log_line(f"error: {d.name}: {msg}")
+
+        if not errors and not screen.is_cancelled():
+            await screen.log_line("All done")
+            await asyncio.sleep(0.6)
+            self.pop_screen()
+            self._do_sync()
+        elif screen.is_cancelled():
+            await screen.log_line("Cancelled")
+            await asyncio.sleep(0.4)
+            self.pop_screen()
+        else:
+            screen.set_final()
+            await screen.log_line("Errors — press any key to close")
 
     def action_preview(self) -> None:
         if not self.config:
