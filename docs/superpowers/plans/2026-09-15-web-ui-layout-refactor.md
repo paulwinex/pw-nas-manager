@@ -265,7 +265,7 @@ const router = useRouter();
 const route = useRoute();
 
 const drawerOpen = ref(false);
-const isMobile = computed(() => $q.screen.lt.lg);
+const isMobile = computed(() => $q.screen.lt.md);
 
 watch(
   () => route.fullPath,
@@ -340,7 +340,7 @@ const columns = computed<QTableColumn[]>(() => {
     { name: 'username', label: 'Username', field: 'username', align: 'left' },
     { name: 'is_admin', label: 'Role', field: 'is_admin', align: 'left' },
   ];
-  if (!$q.screen.lt.lg) {
+  if (!$q.screen.lt.md) {
     cols.push({ name: 'created_at', label: 'Created', field: 'created_at', align: 'left' });
   }
   cols.push({ name: 'actions', label: '', field: '', align: 'right' });
@@ -378,7 +378,7 @@ const columns = computed<QTableColumn[]>(() => {
     { name: 'name', label: 'Name', field: 'name', align: 'left' },
     { name: 'path', label: 'Path', field: 'path', align: 'left' },
   ];
-  if (!$q.screen.lt.lg) {
+  if (!$q.screen.lt.md) {
     cols.push({ name: 'comment', label: 'Comment', field: 'comment', align: 'left' });
   }
   cols.push({ name: 'actions', label: '', field: '', align: 'right' });

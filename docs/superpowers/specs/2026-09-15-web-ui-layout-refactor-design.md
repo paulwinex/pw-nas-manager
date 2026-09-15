@@ -79,11 +79,11 @@ on mount with a single loading/error state, exactly as today.
 ## Mobile responsive tweaks
 
 Mobile threshold = current measure point: viewport width < 1024px
-(Quasar `$q.screen.lt.lg`), to stay consistent with the existing sidebar
-collapse behavior.
+(Quasar `$q.screen.lt.md`; Quasar 2 breakpoints: sm=600, md=1024, lg=1440),
+to stay consistent with the existing sidebar collapse behavior.
 
 - **Users table**: hide the "Created" (`created_at`) column on mobile via a
-  computed `columns` array filtered by `$q.screen.lt.lg`.
+  computed `columns` array filtered by `$q.screen.lt.md`.
 - **Shares table**: hide the "Comment" (`comment`) column on mobile the same way.
 - **System page**: cards one per row on mobile — media query
   `@media (max-width: 1023px)` sets `.dash-card-half { flex-basis: 100% }`.
