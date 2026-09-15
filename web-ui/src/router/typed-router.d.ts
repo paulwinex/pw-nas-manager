@@ -60,15 +60,19 @@ declare module 'vue-router/auto-routes' {
       { path: ParamValue<false> },
       | never
     >,
-    '/admin/(index)': RouteRecordInfo<
-      '/admin/(index)',
+    '/admin': RouteRecordInfo<
+      '/admin',
       '/admin',
       Record<never, never>,
       Record<never, never>,
-      | never
+      | '/admin/(index)'
+      | '/admin/groups'
+      | '/admin/shares'
+      | '/admin/system'
+      | '/admin/users'
     >,
-    '/admin/': RouteRecordInfo<
-      '/admin/',
+    '/admin/(index)': RouteRecordInfo<
+      '/admin/(index)',
       '/admin',
       Record<never, never>,
       Record<never, never>,
@@ -156,17 +160,22 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | 'path'
     }
-    'src/pages/admin/(index).vue': {
+    'src/pages/admin.vue': {
       routes:
+        | '/admin'
         | '/admin/(index)'
+        | '/admin/groups'
+        | '/admin/shares'
+        | '/admin/system'
+        | '/admin/users'
       views:
-        | never
+        | 'default'
       pathParamNames:
         | never
     }
-    'src/pages/admin/index.vue': {
+    'src/pages/admin/(index).vue': {
       routes:
-        | '/admin/'
+        | '/admin/(index)'
       views:
         | never
       pathParamNames:
