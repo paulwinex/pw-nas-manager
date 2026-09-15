@@ -4,7 +4,7 @@
 
 **Goal:** Split the single combined MainLayout into a sidebar-less user layout plus a separate admin layout with its own sidebar/drawer, and make the user home page two-tabbed.
 
-**Architecture:** Keep Quasar file-based routing. `src/pages/index.vue` stays the user layout (`/`), admin pages move from `src/pages/index/admin/` to `src/pages/admin/` with a new `admin/index.vue` wrapper + `AdminLayout.vue`. Two shared components (`UserMenu.vue`, `AdminNav.vue`) are reused by both layouts. Mobile (<1024px) gets a `behavior="mobile"` `q-drawer` (overlay, does not shift content); desktop keeps the centered `.page-box` with an inline `<aside>` sidebar.
+**Architecture:** Keep Quasar file-based routing. `src/pages/index.vue` stays the user layout (`/`), admin pages move from `src/pages/index/admin/` to `src/pages/admin/` with a new `admin.vue` wrapper (a FILE, mirroring the root `src/pages/index.vue` + `src/pages/index/` pattern — `pages/admin/index.vue` does NOT nest sibling pages) + `AdminLayout.vue`. Two shared components (`UserMenu.vue`, `AdminNav.vue`) are reused by both layouts. Mobile (<1024px) gets a `behavior="mobile"` `q-drawer` (overlay, does not shift content); desktop keeps the centered `.page-box` with an inline `<aside>` sidebar.
 
 **Tech Stack:** Vue 3, Quasar 2 (`q-layout`, `q-drawer`, `q-tabs`, `$q.screen`), vue-router auto-routes, TypeScript strict, Pinia auth store.
 
@@ -18,7 +18,7 @@ New:
 - `web-ui/src/components/layout/UserMenu.vue` — shared user dropdown (profile / admin entry / logout)
 - `web-ui/src/components/layout/AdminNav.vue` — admin nav list (shared by aside + drawer)
 - `web-ui/src/layouts/AdminLayout.vue` — admin layout: desktop inline aside, mobile overlay drawer
-- `web-ui/src/pages/admin/index.vue` — route wrapper `<AdminLayout />` for `/admin`
+- `web-ui/src/pages/admin.vue` — route wrapper `<AdminLayout />` for `/admin` (a FILE next to the `pages/admin/` directory, mirroring the root `pages/index.vue` pattern)
 - `web-ui/src/pages/admin/{groups,shares,system,users}.vue` — moved from `src/pages/index/admin/`
 - `web-ui/src/pages/admin/(index).vue` — moved dashboard
 
@@ -32,7 +32,7 @@ Deleted (moved):
 
 Route map after refactor (regenerated into `web-ui/src/router/typed-router.d.ts`):
 - `/` → `pages/index.vue` (`MainLayout`), children `(index).vue`, `profile.vue`
-- `/admin` → `pages/admin/index.vue` (`AdminLayout`), children `(index).vue` (dashboard), `users.vue`, `shares.vue`, `groups.vue`, `system.vue`
+- `/admin` → `pages/admin.vue` (`AdminLayout`), children `(index).vue` (dashboard), `users.vue`, `shares.vue`, `groups.vue`, `system.vue`
 
 ---
 
@@ -202,7 +202,7 @@ Desktop (`>=1024px`): inline `<aside>` sidebar inside the centered `.page-box` �
 
 **Files:**
 - Create: `web-ui/src/layouts/AdminLayout.vue`
-- Create: `web-ui/src/pages/admin/index.vue`
+- Create: `web-ui/src/pages/admin.vue`
 
 - [ ] **Step 1: Create `web-ui/src/layouts/AdminLayout.vue`**
 
@@ -276,7 +276,7 @@ watch(
 </script>
 ```
 
-- [ ] **Step 2: Create `web-ui/src/pages/admin/index.vue`**
+- [ ] **Step 2: Create `web-ui/src/pages/admin.vue`**
 
 ```vue
 <template>
@@ -296,7 +296,7 @@ Expected: no errors.
 - [ ] **Step 4: Commit**
 
 ```bash
-git add web-ui/src/layouts/AdminLayout.vue web-ui/src/pages/admin/index.vue
+git add web-ui/src/layouts/AdminLayout.vue web-ui/src/pages/admin.vue
 git commit -m "feat(ui): admin layout with sidebar (desktop) and overlay drawer (mobile)"
 ```
 
@@ -317,7 +317,7 @@ git commit -m "feat(ui): admin layout with sidebar (desktop) and overlay drawer 
 git mv web-ui/src/pages/index/admin web-ui/src/pages/admin
 ```
 
-Result files: `(index).vue`, `groups.vue`, `shares.vue`, `system.vue`, `users.vue` under `web-ui/src/pages/admin/` (alongside the `index.vue` created in Task 3).
+Result files: `(index).vue`, `groups.vue`, `shares.vue`, `system.vue`, `users.vue` under `web-ui/src/pages/admin/` (the parent wrapper is the FILE `web-ui/src/pages/admin.vue` created in Task 3 — do not create an `admin/index.vue`).
 
 - [ ] **Step 2: `users.vue` — hide "Created" column on mobile**
 
@@ -414,7 +414,7 @@ This makes Dashboard cards 2 per row and System cards 1 per row on mobile (`<102
 - [ ] **Step 5: Regenerate the typed router**
 
 Run: `npx quasar prepare`
-Expected: rewrites `web-ui/src/router/typed-router.d.ts`. Confirm the file now maps `src/pages/admin/index.vue` as a `//admin` parent and the admin children under it (and no longer lists them under `src/pages/index/admin/`).
+Expected: rewrites `web-ui/src/router/typed-router.d.ts`. Confirm the file now maps `src/pages/admin.vue` as the `/admin` parent with the admin children nested under it (and no longer lists them under `src/pages/index/admin/`). If the admin children are NOT nested under the `/admin` route record, the wrapper must be a FILE `src/pages/admin.vue` next to the directory `src/pages/admin/` (mirroring root `index.vue` + `index/`) — `pages/admin/index.vue` does not nest.
 
 - [ ] **Step 6: Verify typecheck**
 

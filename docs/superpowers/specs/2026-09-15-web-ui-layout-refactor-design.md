@@ -27,9 +27,16 @@ already used at the root:
 
 - `src/pages/index.vue` → `/` renders user `MainLayout`; children:
   `(index).vue` → `/`, `profile.vue` → `/profile`.
-- `src/pages/admin/index.vue` → `/admin` renders new `AdminLayout`; children:
-  `(index).vue` → `/admin` (dashboard), `users.vue`, `shares.vue`,
-  `groups.vue`, `system.vue`.
+- `src/pages/admin.vue` → `/admin` renders new `AdminLayout`; children in
+  `src/pages/admin/`: `(index).vue` → `/admin` (dashboard), `users.vue`,
+  `shares.vue`, `groups.vue`, `system.vue`.
+
+> **File-based routing detail (verified against this toolchain):** the parent
+> layout wrapper must be a FILE `src/pages/admin.vue` next to the directory
+> `src/pages/admin/` — exactly like the root `src/pages/index.vue` +
+> `src/pages/index/`. Putting a wrapper at `src/pages/admin/index.vue` does
+> **not** nest the sibling admin pages under it (they become top-level sibling
+> routes and render without the layout).
 
 The router guard `if (to.path.startsWith('/admin') && !auth.isAdmin)` keeps
 working unchanged because the `/admin/*` paths are preserved.
@@ -97,7 +104,7 @@ New:
 - `src/layouts/AdminLayout.vue`
 - `src/components/layout/AdminNav.vue`
 - `src/components/layout/UserMenu.vue`
-- `src/pages/admin/index.vue` (wrapper `<AdminLayout />`)
+- `src/pages/admin.vue` (wrapper `<AdminLayout />`)
 - `src/pages/admin/(index).vue`, `users.vue`, `shares.vue`, `groups.vue`,
   `system.vue` (moved from `src/pages/index/admin/`, via `git mv`)
 
