@@ -209,6 +209,8 @@ async def run_command_streaming(
 
     q: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_running_loop()
+    out_done = threading.Event()
+    err_done = threading.Event()
 
     def pump(stream: str) -> None:
         fh = proc.stderr if stream == "err" else proc.stdout
@@ -217,8 +219,13 @@ async def run_command_streaming(
                 loop.call_soon_threadsafe(q.put_nowait, ("line", stream, line.rstrip("\n")))
         except Exception:
             pass
+        finally:
+            flag = out_done if stream == "out" else err_done
+            loop.call_soon_threadsafe(flag.set)
 
     def waiter() -> None:
+        out_done.wait()
+        err_done.wait()
         try:
             rc = proc.wait()
         except Exception:
@@ -256,5 +263,8 @@ async def run_command_streaming(
                 await _emit(sink, payload)
     except asyncio.QueueEmpty:
         pass
+
+    if cancelled():
+        return False, "cancelled"
 
     return (True, "ok") if rc == 0 else (False, f"exit code {rc}")

@@ -1,9 +1,12 @@
+import asyncio
+
 from nasmanager.config import find_free_drive_letter
 from nasmanager.mount_engine import (
     MountCommand,
     execute_command,
     plan_mount,
     plan_umount,
+    run_command_streaming,
 )
 
 
@@ -51,16 +54,6 @@ def test_windows_umount_drive():
     assert "net" in " ".join(cmd.command)
     assert "/delete" in " ".join(cmd.command)
 
-
-import asyncio
-
-from nasmanager.mount_engine import (
-    MountCommand,
-    execute_command,
-    plan_mount,
-    plan_umount,
-    run_command_streaming,
-)
 
 _SECS = ["python3", "-c"]
 
@@ -160,3 +153,17 @@ def test_streaming_password_provider_none_cancels():
     ok, msg, lines = _collect(cmd, provider)
     assert ok is False
     assert msg == "cancelled"
+
+
+def test_streaming_large_output_not_dropped():
+    script = "import sys; [print(i) for i in range(5000)]"
+    cmd = MountCommand(description="t", command=_SECS + [script], is_mount=True)
+
+    async def provider(prompt):
+        return None
+
+    ok, msg, lines = _collect(cmd, provider)
+    assert ok is True
+    assert len(lines) == 5000
+    assert lines[0] == "0"
+    assert lines[-1] == "4999"
