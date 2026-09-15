@@ -121,8 +121,6 @@ def test_final_mode_pop_on_escape():
 
 
 def test_log_line_writes_to_richlog():
-    import asyncio
-    from nasmanager.ui.mountlog import MountLogScreen
     from textual.widgets import RichLog
 
     async def run():

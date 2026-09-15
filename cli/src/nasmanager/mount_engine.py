@@ -197,15 +197,18 @@ async def run_command_streaming(
             return False, "cancelled"
         cmd_list = [password if a == PASSWORD_PLACEHOLDER else a for a in cmd_list]
 
-    proc = subprocess.Popen(
-        cmd_list,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        proc = subprocess.Popen(
+            cmd_list,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError as e:
+        return False, str(e)
 
     if cancelled():
         _terminate(proc)

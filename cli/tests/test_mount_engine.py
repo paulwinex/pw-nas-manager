@@ -193,6 +193,24 @@ def test_streaming_sudo_prompt_provider_none():
     assert msg == "cancelled"
 
 
+def test_streaming_spawn_oserror_returns_failure():
+    import subprocess
+    from unittest.mock import patch
+
+    cmd = MountCommand(description="t", command=["definitely-not-a-binary"], is_mount=True)
+
+    def provider(prompt):
+        raise AssertionError("prompt must not fire")
+
+    with patch(
+        "nasmanager.mount_engine.subprocess.Popen",
+        side_effect=OSError("no such binary"),
+    ):
+        ok, msg, lines = _collect(cmd, provider)
+    assert ok is False
+    assert "no such binary" in msg
+
+
 def test_streaming_cancel_mid_stream():
     script = "import time\nfor i in range(50):\n    print(i)\n    time.sleep(0.02)"
     cmd = MountCommand(description="t", command=_SECS + [script], is_mount=True)

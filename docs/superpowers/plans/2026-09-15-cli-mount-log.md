@@ -344,15 +344,18 @@ async def run_command_streaming(
             return False, "cancelled"
         cmd_list = [password if a == "<PASSWORD>" else a for a in cmd_list]
 
-    proc = subprocess.Popen(
-        cmd_list,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        proc = subprocess.Popen(
+            cmd_list,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError as e:
+        return False, str(e)
 
     if cancelled():
         _terminate(proc)
@@ -736,6 +739,9 @@ from nasmanager.ui.mountlog import MountLogScreen
             await screen.log_line("")
             if mount:
                 if not self.config:
+                    await screen.log_line("error: configuration lost")
+                    screen.set_final()
+                    await screen.log_line("Errors — press any key to close")
                     return
                 cmd = plan_mount(
                     d.name, d.host, d.port, self.config.username,

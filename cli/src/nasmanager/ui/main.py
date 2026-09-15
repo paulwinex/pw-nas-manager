@@ -10,7 +10,7 @@ from textual.widgets import DataTable, Footer, Header, Static
 from nasmanager.api import ApiClient, ApiError
 from nasmanager.auth import login_or_refresh
 from nasmanager.config import Config, load_mounts, MountEntry, save_mounts
-from nasmanager.diff import compute_diff, ShareStatus
+from nasmanager.diff import ShareDiff, ShareStatus, compute_diff
 from nasmanager.mount_engine import (
     is_mounted_linux,
     is_mounted_windows,
@@ -165,6 +165,9 @@ class NasManagerApp(App):
             await screen.log_line("")
             if mount:
                 if not self.config:
+                    await screen.log_line("error: configuration lost")
+                    await screen.log_line("Errors — press any key to close")
+                    screen.set_final()
                     return
                 cmd = plan_mount(
                     d.name, d.host, d.port, self.config.username,
