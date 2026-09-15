@@ -7,7 +7,7 @@ from textual.widgets import Button, Input, Label, Static
 
 
 class PasswordModal(ModalScreen[str]):
-    """Модалка для ввода пароля (sudo/smb)."""
+    """Password prompt modal (sudo/smb)."""
 
     def __init__(self, prompt: str = "Password:"):
         super().__init__()
@@ -36,15 +36,15 @@ class PasswordModal(ModalScreen[str]):
 
 
 class LoginModal(ModalScreen[tuple[str, str] | None]):
-    """Модалка для логина."""
+    """Modal for login."""
 
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog-container"):
-            yield Static("Логин", id="dialog-label")
+            yield Static("Login", id="dialog-label")
             yield Input(placeholder="username", id="username-input")
             yield Input(password=True, placeholder="password", id="password-input")
-            yield Button("Войти", variant="primary", id="ok")
-            yield Button("Отмена", variant="default", id="cancel")
+            yield Button("Sign in", variant="primary", id="ok")
+            yield Button("Cancel", variant="default", id="cancel")
 
     def on_mount(self) -> None:
         self.query_one("#username-input", Input).focus()

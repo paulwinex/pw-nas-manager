@@ -38,7 +38,9 @@ class WizardScreen(Screen):
         margin-bottom: 1;
     }
     #next {
-        width: 16;
+        width: auto;
+        min-width: 0;
+        padding: 0 1;
         margin-top: 1;
     }
     #error {
@@ -52,17 +54,17 @@ class WizardScreen(Screen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="wizard"):
-            yield Static("Настройка NAS Manager", id="title")
-            yield Label("Адрес сервера:")
+            yield Static("NAS Manager Setup", id="title")
+            yield Label("Server address:")
             yield Input(value="http://nas:8000", id="server_url")
-            yield Label("Логин:")
+            yield Label("Username:")
             yield Input(id="username")
-            yield Label("Пароль:")
+            yield Label("Password:")
             yield Input(password=True, id="password")
-            yield Label("Корневая папка для шар:")
+            yield Label("Mount root:")
             default_root = "C:\\nas" if platform.system() == "Windows" else "/mnt/nas"
             yield Input(value=default_root, id="mount_root")
-            yield Button("Далее", variant="primary", id="next")
+            yield Button("Next", variant="primary", id="next")
             yield Static("", id="error")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -76,14 +78,14 @@ class WizardScreen(Screen):
         mount_root = self.query_one("#mount_root", Input).value.strip()
 
         if not server or not username or not password:
-            self.query_one("#error", Static).update("Все поля обязательны")
+            self.query_one("#error", Static).update("All fields are required")
             return
 
         api = ApiClient(server)
         try:
             tokens = api.login(username, password)
         except ApiError as e:
-            self.query_one("#error", Static).update(f"Ошибка: {e.detail}")
+            self.query_one("#error", Static).update(f"Error: {e.detail}")
             return
 
         cfg = Config(

@@ -64,7 +64,7 @@ class NasManagerApp(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield DataTable(id="status-table")
-        yield Static("Нажмите ? для помощи", id="help-bar")
+        yield Static("Press ? for help", id="help-bar")
         yield Footer()
 
     def action_sync(self) -> None:
@@ -92,13 +92,13 @@ class NasManagerApp(App):
                     self.config.save()
                     shares = await asyncio.to_thread(self.api.list_shares, tokens["access_token"])
                 except Exception as e:
-                    self.query_one("#help-bar", Static).update(f"Ошибка логина: {e}")
+                    self.query_one("#help-bar", Static).update(f"Login error: {e}")
                     return
             else:
-                self.query_one("#help-bar", Static).update(f"Ошибка API: {e.detail}")
+                self.query_one("#help-bar", Static).update(f"API error: {e.detail}")
                 return
         except Exception as e:
-            self.query_one("#help-bar", Static).update(f"Ошибка синка: {e}")
+            self.query_one("#help-bar", Static).update(f"Sync error: {e}")
             return
 
         mounts = load_mounts()
@@ -113,10 +113,10 @@ class NasManagerApp(App):
             table.add_columns("Share", "Access", "Status", "Target")
         for d in self.diff_data:
             status_text = {
-                ShareStatus.NEW: "🆕 новая",
-                ShareStatus.MOUNTED: "✅ подключена",
-                ShareStatus.MOUNTED_NOT_REAL: "⚠️ подключена (нет mount)",
-                ShareStatus.REVOKED: "❌ отозвана",
+                ShareStatus.NEW: "🆕 new",
+                ShareStatus.MOUNTED: "✅ mounted",
+                ShareStatus.MOUNTED_NOT_REAL: "⚠️ mounted (no mount)",
+                ShareStatus.REVOKED: "❌ revoked",
             }[d.status]
             table.add_row(d.name, d.access, status_text, d.target)
 
@@ -133,7 +133,7 @@ class NasManagerApp(App):
     async def _mount_shares(self, shares) -> None:
         if not self.config:
             return
-        password = await self.push_screen_wait(PasswordModal("Пароль для sudo/mount:"))
+        password = await self.push_screen_wait(PasswordModal("Password for sudo/mount:"))
         if password is None:
             return
 
@@ -189,7 +189,7 @@ class NasManagerApp(App):
                 lines.append(f"[dry-run] {d.name}: {cmd.description}")
             else:
                 lines.append(f"[skip]   {d.name}: {d.status.value}")
-        self.query_one("#help-bar", Static).update(" | ".join(lines) if lines else "Нет действий")
+        self.query_one("#help-bar", Static).update(" | ".join(lines) if lines else "No actions")
 
     def action_help(self) -> None:
         help_text = (
