@@ -56,7 +56,7 @@ const router = useRouter();
 const route = useRoute();
 
 const drawerOpen = ref(false);
-const isMobile = computed(() => $q.screen.lt.lg);
+const isMobile = computed(() => $q.screen.lt.md);
 
 watch(
   () => route.fullPath,
