@@ -110,6 +110,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
+import type { QTableColumn } from 'quasar';
 import { api } from '@/api';
 import type { ShareOut } from '@/api/types';
 
@@ -136,12 +137,17 @@ const deleteOpen = ref(false);
 const deleteTarget = ref<ShareOut | null>(null);
 const deleting = ref(false);
 
-const columns = [
-  { name: 'name', label: 'Name', field: 'name', align: 'left' as const },
-  { name: 'path', label: 'Path', field: 'path', align: 'left' as const },
-  { name: 'comment', label: 'Comment', field: 'comment', align: 'left' as const },
-  { name: 'actions', label: '', field: '', align: 'right' as const },
-];
+const columns = computed<QTableColumn[]>(() => {
+  const cols: QTableColumn[] = [
+    { name: 'name', label: 'Name', field: 'name', align: 'left' },
+    { name: 'path', label: 'Path', field: 'path', align: 'left' },
+  ];
+  if (!$q.screen.lt.md) {
+    cols.push({ name: 'comment', label: 'Comment', field: 'comment', align: 'left' });
+  }
+  cols.push({ name: 'actions', label: '', field: '', align: 'right' });
+  return cols;
+});
 
 const namePattern = /^[a-z][a-z0-9_-]{1,31}$/;
 

@@ -57,3 +57,13 @@
 .page-sidebar .q-item.q-router-link--active .q-item__section--avatar {
   color: #fff;
 }
+
+@media (max-width: 1023px) {
+  .dash-card {
+    flex: 1 1 45%;
+  }
+
+  .dash-card-half {
+    flex: 1 1 100%;
+  }
+}

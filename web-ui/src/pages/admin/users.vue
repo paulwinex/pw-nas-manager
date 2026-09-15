@@ -113,6 +113,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
+import type { QTableColumn } from 'quasar';
 import { api } from '@/api';
 import { formatDateTime } from '@/utils/dates';
 import type { UserOut } from '@/api/types';
@@ -131,12 +132,17 @@ const filteredUsers = computed(() => {
 });
 const selected = ref<UserOut | null>(null);
 
-const columns = [
-  { name: 'username', label: 'Username', field: 'username', align: 'left' as const },
-  { name: 'is_admin', label: 'Role', field: 'is_admin', align: 'left' as const },
-  { name: 'created_at', label: 'Created', field: 'created_at', align: 'left' as const },
-  { name: 'actions', label: '', field: '', align: 'right' as const },
-];
+const columns = computed<QTableColumn[]>(() => {
+  const cols: QTableColumn[] = [
+    { name: 'username', label: 'Username', field: 'username', align: 'left' },
+    { name: 'is_admin', label: 'Role', field: 'is_admin', align: 'left' },
+  ];
+  if (!$q.screen.lt.md) {
+    cols.push({ name: 'created_at', label: 'Created', field: 'created_at', align: 'left' });
+  }
+  cols.push({ name: 'actions', label: '', field: '', align: 'right' });
+  return cols;
+});
 
 const createOpen = ref(false);
 const createForm = ref({ username: '', password: '', is_admin: false });
