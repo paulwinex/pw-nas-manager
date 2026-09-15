@@ -13,10 +13,42 @@ from nasmanager.config import Config
 
 class WizardScreen(Screen):
     BINDINGS = [("escape", "app.pop_screen", "Quit")]
+    CSS = """
+    WizardScreen {
+        align: center middle;
+    }
+    #wizard {
+        width: 68;
+        height: auto;
+        padding: 0 2 1 2;
+    }
+    #title {
+        text-style: bold;
+        margin-bottom: 1;
+    }
+    #wizard Label {
+        padding: 0;
+        color: $text-muted;
+    }
+    #wizard Input {
+        height: 1;
+        border: none;
+        background: $surface;
+        padding: 0 1;
+        margin-bottom: 1;
+    }
+    #next {
+        width: 16;
+        margin-top: 1;
+    }
+    #error {
+        color: $error;
+        padding: 0;
+    }
+    """
 
     def __init__(self):
         super().__init__()
-        self.step = 0
 
     def compose(self) -> ComposeResult:
         with Vertical(id="wizard"):
