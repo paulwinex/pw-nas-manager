@@ -33,7 +33,7 @@
         <aside v-show="leftOpen" class="page-sidebar">
           <q-list padding>
             <q-item
-              v-for="item in navItems"
+              v-for="item in mainNavItems"
               :key="item.to"
               clickable
               :to="item.to"
@@ -45,6 +45,28 @@
               </q-item-section>
               <q-item-section>{{ item.label }}</q-item-section>
             </q-item>
+            <q-expansion-item
+              v-if="auth.isAdmin"
+              icon="admin_panel_settings"
+              label="Админка"
+              default-opened
+              :header-inset-level="0.2"
+              :content-inset-level="1"
+              class="q-mb-xs"
+            >
+              <q-item
+                v-for="item in adminNavItems"
+                :key="item.to"
+                clickable
+                :to="item.to"
+                exact
+              >
+                <q-item-section avatar>
+                  <q-icon :name="item.icon" />
+                </q-item-section>
+                <q-item-section>{{ item.label }}</q-item-section>
+              </q-item>
+            </q-expansion-item>
           </q-list>
         </aside>
         <main class="page-content" style="min-width: 0">
@@ -64,16 +86,21 @@ const router = useRouter();
 const auth = useAuthStore();
 const leftOpen = ref(true);
 
-const navItems = computed(() => {
+const mainNavItems = computed(() => {
   const items = [
     { to: '/', label: 'Мои шары', icon: 'folder_shared' },
     { to: '/profile', label: 'Профиль', icon: 'account_circle' },
   ];
-  if (auth.isAdmin) {
-    items.push({ to: '/admin', label: 'Админка', icon: 'admin_panel_settings' });
-  }
   return items;
 });
+
+const adminNavItems = [
+  { to: '/admin', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/admin/users', label: 'Users', icon: 'people' },
+  { to: '/admin/shares', label: 'Shares', icon: 'folder_shared' },
+  { to: '/admin/groups', label: 'Groups', icon: 'groups' },
+  { to: '/admin/system', label: 'System', icon: 'settings' },
+];
 
 function measure() {
   if (window.innerWidth < 1024) leftOpen.value = false;
