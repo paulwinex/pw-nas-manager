@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import asyncio
+import os
 import subprocess
 import sys
+import threading
 from dataclasses import dataclass
+from typing import Awaitable, Callable
 
 
 @dataclass
@@ -61,10 +65,12 @@ def plan_mount(
 def _plan_mount_linux(share, host, port, username, mount_root) -> MountCommand:
     target = f"{mount_root}/{share}"
     source = f"//{host}/{share}"
-    cmd = [
-        "sudo", "mount", "-t", "cifs", source, target,
-        "-o", f"username={username},port={port},uid=$(id -u),gid=$(id -g),dir_mode=0755,file_mode=0644",
-    ]
+    # uid/gid подставляются числами (без $(...) — шелла тут нет), пароль sudo — через stdin
+    opts = (
+        f"username={username},port={port},"
+        f"uid={os.getuid()},gid={os.getgid()},dir_mode=0755,file_mode=0644"
+    )
+    cmd = ["sudo", "-S", "mount", "-t", "cifs", source, target, "-o", opts]
     return MountCommand(description=f"mount {share} → {target}", command=cmd, is_mount=True, target=target)
 
 
@@ -108,7 +114,7 @@ def plan_umount(target: str) -> MountCommand:
         )
     return MountCommand(
         description=f"umount {target}",
-        command=["sudo", "umount", target],
+        command=["sudo", "-S", "umount", target],
         is_mount=False,
         target=target,
     )
@@ -131,3 +137,124 @@ def execute_command(cmd: MountCommand, dry_run: bool = False, password: str | No
         return True, "ok"
     except Exception as e:
         return False, str(e)
+
+
+PasswordProvider = Callable[[str], Awaitable[str | None]]
+Sink = Callable[[str], Awaitable[None] | None]
+
+
+def _is_sudo_prompt(line: str) -> bool:
+    s = line.strip().lower()
+    return (
+        s.startswith("[sudo]")
+        or s.startswith("password") and (":" in s or "for" in s)
+    )
+
+
+async def _emit(sink: Sink, line: str) -> None:
+    result = sink(line)
+    if asyncio.iscoroutine(result):
+        await result
+
+
+def _terminate(proc: subprocess.Popen) -> None:
+    try:
+        proc.terminate()
+    except OSError:
+        pass
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        try:
+            proc.kill()
+        except OSError:
+            pass
+
+
+async def run_command_streaming(
+    command: MountCommand,
+    password_provider: PasswordProvider,
+    sink: Sink,
+    cancelled: Callable[[], bool],
+) -> tuple[bool, str]:
+    """Стримит построчно вывод команды в sink.
+
+    - Если в команде есть плейсхолдер <PASSWORD> (Windows net use), пароль
+      запрашивается ДО запуска и подставляется в аргументы.
+    - Если в stderr появился промпт sudo (Linux), пароль запрашивается через
+      password_provider и отправляется в stdin (sudo -S).
+    Возвращает (ok, message); message == "cancelled" при отмене.
+    """
+    cmd_list = list(command.command)
+
+    if "<PASSWORD>" in cmd_list:
+        password = await password_provider(f"Password for {command.target or 'mount'}:")
+        if password is None or cancelled():
+            return False, "cancelled"
+        cmd_list = [password if a == "<PASSWORD>" else a for a in cmd_list]
+
+    proc = subprocess.Popen(
+        cmd_list,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+
+    if cancelled():
+        _terminate(proc)
+        return False, "cancelled"
+
+    q: asyncio.Queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+
+    def pump(stream: str) -> None:
+        fh = proc.stderr if stream == "err" else proc.stdout
+        try:
+            for line in fh:
+                loop.call_soon_threadsafe(q.put_nowait, ("line", stream, line.rstrip("\n")))
+        except Exception:
+            pass
+
+    def waiter() -> None:
+        try:
+            rc = proc.wait()
+        except Exception:
+            rc = -1
+        loop.call_soon_threadsafe(q.put_nowait, ("done", "", rc))
+
+    threading.Thread(target=pump, args=("out",), daemon=True).start()
+    threading.Thread(target=pump, args=("err",), daemon=True).start()
+    threading.Thread(target=waiter, daemon=True).start()
+
+    while True:
+        if cancelled():
+            _terminate(proc)
+            return False, "cancelled"
+        try:
+            kind, stream, payload = await asyncio.wait_for(q.get(), timeout=0.1)
+        except asyncio.TimeoutError:
+            continue
+        if kind == "done":
+            rc = payload
+            break
+        if stream == "err" and _is_sudo_prompt(payload):
+            pwd = await password_provider(payload)
+            if pwd is None:
+                _terminate(proc)
+                return False, "cancelled"
+            proc.stdin.write(pwd + "\n")
+            proc.stdin.flush()
+        await _emit(sink, payload)
+
+    try:
+        while True:
+            kind, stream, payload = q.get_nowait()
+            if kind == "line":
+                await _emit(sink, payload)
+    except asyncio.QueueEmpty:
+        pass
+
+    return (True, "ok") if rc == 0 else (False, f"exit code {rc}")
