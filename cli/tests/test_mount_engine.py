@@ -167,3 +167,53 @@ def test_streaming_large_output_not_dropped():
     assert len(lines) == 5000
     assert lines[0] == "0"
     assert lines[-1] == "4999"
+
+
+def test_streaming_nonzero_exit():
+    script = "import sys; print('boom', file=sys.stderr); sys.exit(3)"
+    cmd = MountCommand(description="t", command=_SECS + [script], is_mount=True)
+    ok, msg, lines = _collect(cmd, lambda p: None)
+    assert ok is False
+    assert msg == "exit code 3"
+    assert "boom" in lines
+
+
+def test_streaming_sudo_prompt_provider_none():
+    script = (
+        "import sys; sys.stderr.write('[sudo] password for alice:\\n'); "
+        "sys.stderr.flush(); sys.stdin.read(1)"
+    )
+    cmd = MountCommand(description="t", command=_SECS + [script], is_mount=True)
+
+    async def provider(prompt):
+        return None
+
+    ok, msg, lines = _collect(cmd, provider)
+    assert ok is False
+    assert msg == "cancelled"
+
+
+def test_streaming_cancel_mid_stream():
+    script = "import time\nfor i in range(50):\n    print(i)\n    time.sleep(0.02)"
+    cmd = MountCommand(description="t", command=_SECS + [script], is_mount=True)
+    seen = []
+    done = {"on": False}
+
+    def cancelled():
+        return done["on"]
+
+    async def provider(prompt):
+        return None
+
+    async def sink(line):
+        seen.append(line)
+        if len(seen) >= 3:
+            done["on"] = True
+
+    async def run():
+        return await run_command_streaming(cmd, provider, sink, cancelled)
+
+    ok, msg = asyncio.run(run())
+    assert ok is False
+    assert msg == "cancelled"
+    assert len(seen) < 20

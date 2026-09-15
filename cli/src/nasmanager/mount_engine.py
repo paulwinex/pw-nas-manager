@@ -9,6 +9,11 @@ from dataclasses import dataclass
 from typing import Awaitable, Callable
 
 
+PASSWORD_PLACEHOLDER = "<PASSWORD>"
+POLL_INTERVAL = 0.1
+TERMINATE_GRACE = 5.0
+
+
 @dataclass
 class MountCommand:
     description: str
@@ -77,7 +82,7 @@ def _plan_mount_linux(share, host, port, username, mount_root) -> MountCommand:
 def _plan_mount_windows(share, host, username, mount_root, windows_mode, target_override) -> MountCommand:
     source = f"\\\\{host}\\{share}"
     if windows_mode == "unc":
-        cmd = ["net", "use", source, f"/user:{username}", "<PASSWORD>"]
+        cmd = ["net", "use", source, f"/user:{username}", PASSWORD_PLACEHOLDER]
         return MountCommand(description=f"mount {share} (UNC)", command=cmd, is_mount=True, target=source)
     if windows_mode == "folder":
         target = target_override or f"{mount_root}\\{share}"
@@ -86,7 +91,7 @@ def _plan_mount_windows(share, host, username, mount_root, windows_mode, target_
     # drive
     from nasmanager.config import find_free_drive_letter
     letter = find_free_drive_letter() or "X"
-    cmd = ["net", "use", f"{letter}:", source, f"/user:{username}", "<PASSWORD>"]
+    cmd = ["net", "use", f"{letter}:", source, f"/user:{username}", PASSWORD_PLACEHOLDER]
     return MountCommand(description=f"mount {share} → {letter}:", command=cmd, is_mount=True, target=f"{letter}:")
 
 
@@ -126,7 +131,7 @@ def execute_command(cmd: MountCommand, dry_run: bool = False, password: str | No
         return True, f"[dry-run] {' '.join(cmd.command)}"
 
     actual = list(cmd.command)
-    actual = [password if p == "<PASSWORD>" else p for p in actual]
+    actual = [password if p == PASSWORD_PLACEHOLDER else p for p in actual]
 
     try:
         result = subprocess.run(
@@ -144,11 +149,10 @@ Sink = Callable[[str], Awaitable[None] | None]
 
 
 def _is_sudo_prompt(line: str) -> bool:
+    # Соответствует как "[sudo] password for user:", так и любой строке
+    # "password ... for/: ..." в stderr (локальные варианты sudo/mount).
     s = line.strip().lower()
-    return (
-        s.startswith("[sudo]")
-        or s.startswith("password") and (":" in s or "for" in s)
-    )
+    return s.startswith("[sudo]") or (s.startswith("password") and (":" in s or "for" in s))
 
 
 async def _emit(sink: Sink, line: str) -> None:
@@ -163,7 +167,7 @@ def _terminate(proc: subprocess.Popen) -> None:
     except OSError:
         pass
     try:
-        proc.wait(timeout=5)
+        proc.wait(timeout=TERMINATE_GRACE)
     except subprocess.TimeoutExpired:
         try:
             proc.kill()
@@ -187,11 +191,11 @@ async def run_command_streaming(
     """
     cmd_list = list(command.command)
 
-    if "<PASSWORD>" in cmd_list:
+    if PASSWORD_PLACEHOLDER in cmd_list:
         password = await password_provider(f"Password for {command.target or 'mount'}:")
         if password is None or cancelled():
             return False, "cancelled"
-        cmd_list = [password if a == "<PASSWORD>" else a for a in cmd_list]
+        cmd_list = [password if a == PASSWORD_PLACEHOLDER else a for a in cmd_list]
 
     proc = subprocess.Popen(
         cmd_list,
@@ -241,8 +245,9 @@ async def run_command_streaming(
             _terminate(proc)
             return False, "cancelled"
         try:
-            kind, stream, payload = await asyncio.wait_for(q.get(), timeout=0.1)
-        except asyncio.TimeoutError:
+            kind, stream, payload = q.get_nowait()
+        except asyncio.QueueEmpty:
+            await asyncio.sleep(POLL_INTERVAL)
             continue
         if kind == "done":
             rc = payload
@@ -252,8 +257,11 @@ async def run_command_streaming(
             if pwd is None:
                 _terminate(proc)
                 return False, "cancelled"
-            proc.stdin.write(pwd + "\n")
-            proc.stdin.flush()
+            try:
+                proc.stdin.write(pwd + "\n")
+                proc.stdin.flush()
+            except OSError:
+                pass
         await _emit(sink, payload)
 
     try:
