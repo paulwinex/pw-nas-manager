@@ -1,6 +1,6 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="text-h5 q-mb-md">Мои шары</div>
+  <q-page class="q-pa-md1">
+<!--    <div class="text-h5 q-mb-md">Мои шары</div>-->
 
     <div v-if="loading" class="text-grey">Загрузка…</div>
     <div v-else-if="error" class="text-negative q-mb-md">
@@ -8,9 +8,18 @@
     </div>
 
     <template v-else>
-      <q-tabs v-model="tab" class="text-primary q-mb-md">
-        <q-tab name="shares" label="Мои шары" icon="folder_shared" />
-        <q-tab name="scripts" label="Скрипты" icon="terminal" />
+      <q-tabs
+        v-model="tab"
+        dense
+        inline-label
+        active-color="primary"
+        indicator-color="primary"
+        align="left"
+        :breakpoint="0"
+        class="text-primary q-mb-md "
+      >
+        <q-tab name="shares" label="Shared Paths" icon="folder_shared" />
+        <q-tab name="scripts" label="Scripts" icon="terminal" />
       </q-tabs>
 
       <q-tab-panels v-model="tab" animated>
@@ -18,10 +27,10 @@
           <q-markup-table v-if="shares.length">
             <thead>
               <tr>
-                <th class="text-left">Имя</th>
-                <th class="text-left">Хост</th>
-                <th class="text-right">Порт</th>
-                <th class="text-right">Доступ</th>
+                <th class="text-left">Name</th>
+                <th class="text-left">Host</th>
+                <th class="text-right">Port</th>
+                <th class="text-right">Access</th>
               </tr>
             </thead>
             <tbody>
@@ -35,27 +44,27 @@
               </tr>
             </tbody>
           </q-markup-table>
-          <div v-else class="text-grey">Нет доступных шар.</div>
+          <div v-else class="text-grey">Empty</div>
         </q-tab-panel>
 
         <q-tab-panel name="scripts">
           <!-- Скачать CLI -->
           <q-card flat bordered class="q-mb-lg">
             <q-card-section>
-              <div class="text-h6">CLI-утилита</div>
+              <div class="text-h6">Mount Script</div>
             </q-card-section>
             <q-separator inset />
             <q-card-section class="row q-gutter-sm">
               <q-btn
                 color="primary"
                 icon="download"
-                label="Скачать nasmanager (Linux)"
+                label="Linux"
                 :href="`/api/v1/users/me/cli?os=linux`"
               />
               <q-btn
                 color="primary"
                 icon="download"
-                label="Скачать nasmanager (Windows)"
+                label="Windows"
                 :href="`/api/v1/users/me/cli?os=windows`"
               />
             </q-card-section>
@@ -64,11 +73,11 @@
           <!-- Ручное подключение -->
           <q-card flat bordered>
             <q-card-section>
-              <div class="text-h6">Ручное подключение</div>
+              <div class="text-h6">Manually conenction</div>
             </q-card-section>
             <q-separator inset />
             <q-card-section>
-              <q-tabs v-model="manualTab" class="text-primary">
+              <q-tabs v-model="manualTab" class="text-primary" inline-label dense align="left">
                 <q-tab name="linux" label="Linux" />
                 <q-tab name="windows" label="Windows" />
               </q-tabs>
@@ -102,7 +111,7 @@
                     flat
                     dense
                     icon="content_copy"
-                    label="Копировать"
+                    label="Copy"
                     class="q-mt-sm"
                     @click="copyToClipboard(mountScript.windows_script)"
                   />

@@ -59,7 +59,7 @@ app-exec +cmd:
 
 # ---------- UI (web-ui) ----------
 
-## Start the Quasar dev server (proxies /api to localhost:8000)
+## Start the Quasar dev server (proxies /api to http://localhost:8087, override via API_PROXY_URL)
 [working-directory: 'web-ui']
 ui-dev:
     yarn dev
