@@ -24,29 +24,29 @@ Nothing needs to be installed on the host — only Docker.
 
 ## Self-Service
 
-### Веб-интерфейс
-- `/` — «Мои шары»: список доступных шар, кнопка скачивания скрипта mount-share.py, ручное подключение.
-- `/profile` — профиль, смена пароля.
-- `/admin` — панель администратора (только для admin-учётных записей).
+### Web interface
+- `/` — "My shares": list of shares available to you, download button for the mount-share.py script, manual connection.
+- `/profile` — profile, change password.
+- `/admin` — admin panel (admin accounts only).
 
 ### CLI `nasmount` (mount-share.py)
-Однострочный кросс-платформенный скрипт для монтирования шар этого сервера.
-Только Python 3 (stdlib), без зависимостей; работает на Linux, macOS и Windows.
+A single-file cross-platform script for mounting shares from this server.
+Requires only Python 3 (stdlib), no dependencies; works on Linux, macOS and Windows.
 
-Файл `app/mount_script/mount-share.py` скачивается со страницы «Мои шары»
-кнопкой «Download script».
+The `app/mount_script/mount-share.py` file is downloaded from the "My shares"
+page with the "Download script" button.
 
-**Быстрый старт:**
+**Quick start:**
 ```bash
-python3 mount-share.py auth      # вход; токены хранятся в ~/.config/nasmanager/config.json
-python3 mount-share.py mount     # смонтировать все шары (sudo на Linux/macOS)
-python3 mount-share.py umount    # отмонтировать шары этого NAS
-python3 mount-share.py status    # шары с сервера + статус монтирования
-python3 mount-share.py config    # показать конфиг; задать --root PATH / --url URL
+python3 mount-share.py auth      # log in; tokens stored in ~/.config/nasmanager/config.json
+python3 mount-share.py mount     # mount all shares (sudo on Linux/macOS)
+python3 mount-share.py umount    # unmount shares from this NAS
+python3 mount-share.py status    # shares from server + mount status
+python3 mount-share.py config    # show config; set --root PATH / --url URL
 ```
 
-`mount` и `umount` принимают имена шар, например `python3 mount-share.py mount photos`.
-Подключение к серверу по умолчанию: `http://nas:8000` (изменить командой `config --url`).
+`mount` and `umount` accept share names, e.g. `python3 mount-share.py mount photos`.
+Default server address: `http://nas:8000` (change with the `config --url` command).
 
 ## Running
 
@@ -93,7 +93,7 @@ After startup the API is available at `http://localhost:8000`, interactive docs 
 > Shares served over Samba are reached by the hostname `nas` inside the docker network
 > (e.g. `//nas/photos`). Samba is not reachable outside that network.
 
-### Web UI (web-ui)
+### Web UI
 
 - Admin panel: Vue 3 + Quasar 2 in `web-ui/`.
 - Dev: `just ui-dev` — dev server, `/api` is proxied to `http://localhost:8087`
@@ -147,84 +147,10 @@ curl -s -X POST http://localhost:8000/api/v1/auth/token \
   -d 'username=admin&password=admin123'
 ```
 
-### Auth
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/v1/auth/login` | login (JSON), returns a JWT |
-| POST | `/api/v1/auth/token` | login (form, for the Authorize button), returns a JWT |
+The full endpoint list and interactive examples live in Swagger UI at
+`http://localhost:8000/docs`.
 
-### Users
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/v1/users` | list users |
-| POST | `/api/v1/users` | create a user (`username`, `password`, `is_admin`) |
-| GET | `/api/v1/users/{user_id}` | user details |
-| POST | `/api/v1/users/{user_id}/password` | change password |
-| DELETE | `/api/v1/users/{user_id}` | delete a user (cascade from groups/shares) |
-| GET | `/api/v1/users/{username}/mount-script` | mount scripts for the user's shares |
-
-### Groups
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/v1/groups` | list groups |
-| POST | `/api/v1/groups` | create a group |
-| DELETE | `/api/v1/groups/{group_id}` | delete a group (personal groups cannot be deleted) |
-| GET | `/api/v1/groups/{group_id}/members` | group members (with `expires_at`) |
-| POST | `/api/v1/groups/{group_id}/members` | add a member: `user_id`, `access_level` (`rw`/`ro`), optional `expires_at` |
-| PATCH | `/api/v1/groups/{group_id}/members/{user_id}` | edit a member's `access_level` / `expires_at` |
-| DELETE | `/api/v1/groups/{group_id}/members/{user_id}` | remove a member |
-| GET | `/api/v1/groups/{group_id}/shares` | group shares |
-| POST | `/api/v1/groups/{group_id}/shares` | attach a share: `share_id` |
-| DELETE | `/api/v1/groups/{group_id}/shares/{share_id}` | detach a share |
-
-### Shares
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/v1/shares` | list shares |
-| POST | `/api/v1/shares` | register a share (path must already exist in the share root) |
-| PATCH | `/api/v1/shares/{share_id}` | edit a share (name/path/comment) |
-| DELETE | `/api/v1/shares/{share_id}` | delete a share (files are not touched) |
-| GET | `/api/v1/shares/available` | full paths in the share root that are not yet registered |
-
-### Utilities
-| Method | Path | Description |
-|---|---|---|
-| POST | `/api/v1/sync` | force sync of the Samba registry with the database |
-| POST | `/api/v1/expirations/sweep` | immediately revoke expired temporary access |
-| GET | `/api/v1/registry/shares` | actual share state in the Samba registry |
-| GET | `/api/v1/stats` | counts and expiring memberships |
-
-## Example workflow
-
-```bash
-BASE=http://localhost:8000/api/v1
-TOKEN=$(curl -s -X POST $BASE/auth/login -H 'Content-Type: application/json' \
-  -d '{"username":"admin","password":"admin123"}' | jq -r .access_token)
-AUTH="Authorization: Bearer $TOKEN"
-
-# create the share directory, then users
-mkdir -p share/photos
-alice=$(curl -s -X POST $BASE/users -H "$AUTH" -H 'Content-Type: application/json' \
-  -d '{"username":"alice","password":"alicepw"}' | jq -r .id)
-bob=$(curl -s -X POST $BASE/users -H "$AUTH" -H 'Content-Type: application/json' \
-  -d '{"username":"bob","password":"bobpw"}' | jq -r .id)
-
-# group and share
-team=$(curl -s -X POST $BASE/groups -H "$AUTH" -H 'Content-Type: application/json' \
-  -d '{"name":"team"}' | jq -r .id)
-photos=$(curl -s -X POST $BASE/shares -H "$AUTH" -H 'Content-Type: application/json' \
-  -d '{"name":"photos","path":"/mnt/share/photos"}' | jq -r .id)
-
-# bindings and permissions
-curl -s -X POST $BASE/groups/$team/shares -H "$AUTH" -H 'Content-Type: application/json' \
-  -d "{\"share_id\":\"$photos\"}" >/dev/null
-curl -s -X POST $BASE/groups/$team/members -H "$AUTH" -H 'Content-Type: application/json' \
-  -d "{\"user_id\":\"$alice\",\"access_level\":\"rw\"}" >/dev/null
-curl -s -X POST $BASE/groups/$team/members -H "$AUTH" -H 'Content-Type: application/json' \
-  -d "{\"user_id\":\"$bob\",\"access_level\":\"ro\"}" >/dev/null
-```
-
-Permissions are applied to Samba automatically after every change; inspect the result
+Changes are applied to Samba automatically after every change; inspect the result
 with: `docker exec nas-app net conf showshare photos`.
 
 ## Mounting a share on a client
@@ -244,7 +170,10 @@ mount -t cifs //nas/photos /mnt/photos -o username=alice,password=alicepw
 Ready-to-use commands per user are returned by the mount-script endpoint:
 
 ```bash
-curl -s -X GET $BASE/users/alice/mount-script -H "$AUTH"
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/token \
+  -d 'username=admin&password=admin123' | jq -r .access_token)
+curl -s http://localhost:8000/api/v1/users/alice/mount-script \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Tests
@@ -281,22 +210,3 @@ itself (including via `trap` on failure).
 | `just smb-list pc1 alice alicepw` | list shares as seen by a user |
 | `just mount-share pc1 photos alice alicepw /mnt/photos` | mount a share inside the client |
 | `just smoke-registry` | list shares in the Samba registry |
-
-## Structure
-
-```
-app/
-  api/v1/          API routes
-  core/            settings, database, scheduler
-  db/              SQLite models
-  modules/
-    auth/          JWT authorization
-    users/         users + mount script
-    groups/        groups, members, share links, expired-access sweep
-    shares/        shares
-    samba/         net conf registry, sync engine, OS integration
-deploy/            Dockerfile, compose files, entrypoint, smb.conf
-web-ui/            admin panel (Vue 3 + Quasar)
-tests/             unit and integration tests
-docs/              spec and plan
-```
