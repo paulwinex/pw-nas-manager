@@ -34,6 +34,7 @@
           hide-bottom
           dense
           :loading="loading"
+          :pagination="{ rowsPerPage: 0 }"
         >
           <template v-slot:body-cell-name="cell">
             <q-td :props="cell">
