@@ -50,4 +50,9 @@ async def change_my_password(
 async def download_mount_script() -> FileResponse:
     if not MOUNT_SCRIPT_PATH.exists():
         raise HTTPException(status_code=404, detail="Mount script not found")
-    return FileResponse(MOUNT_SCRIPT_PATH, filename="mount-share.py", media_type="text/x-python")
+    return FileResponse(
+        MOUNT_SCRIPT_PATH,
+        filename="mount-share.py",
+        media_type="text/plain; charset=utf-8",
+        content_disposition_type="inline",
+    )

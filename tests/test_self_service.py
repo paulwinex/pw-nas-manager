@@ -70,10 +70,13 @@ def test_admin_endpoints_403_for_non_admin(client, auth, fake_runner):
 
 
 def test_mount_script_download(client, auth, fake_runner):
-    """/users/me/mount-script/download отдаёт файл mount-share.py."""
+    """/users/me/mount-script/download отдаёт mount-share.py inline как текст."""
     token = _login_user(client, auth)
     resp = client.get("/api/v1/users/me/mount-script/download", headers=_auth(token))
     assert resp.status_code == 200
     assert resp.content.startswith(b"#!/usr/bin/env python3")
     assert "nasmount" in resp.text
-    assert "mount-share.py" in resp.headers.get("content-disposition", "")
+    cd = resp.headers.get("content-disposition", "")
+    assert cd.startswith("inline")
+    assert "mount-share.py" in cd
+    assert "text/plain" in resp.headers.get("content-type", "")

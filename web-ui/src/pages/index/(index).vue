@@ -76,9 +76,10 @@ python3 mount-share.py config    # show config / set --root PATH or --url URL</c
               <q-btn
                 color="primary"
                 icon="download"
-                label="Download script"
+                label="Open script text"
                 :href="api.mountScriptUrl"
-                download="mount-share.py"
+                target="_blank"
+                rel="noopener"
               />
             </q-card-actions>
           </q-card>

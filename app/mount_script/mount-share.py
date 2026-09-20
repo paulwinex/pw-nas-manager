@@ -548,6 +548,12 @@ def cmd_mount(cfg: Config, args: argparse.Namespace) -> int:
     for share in sorted(shares, key=lambda s: s["name"]):
         name, host, port = share["name"], share["host"], share["port"]
         cmd, target, needs_sudo = mount_plan(host, name, port, cfg.username, root, smb_password)
+        if needs_sudo:
+            ok, msg = ensure_dir(target)
+            if not ok:
+                errors.append(f"{name}: {msg}")
+                print(f"error mounting {name}: {msg}")
+                continue
         ok, msg = run_cmd(cmd)
         if ok:
             add_mount(name, share_source(host, name), target)
