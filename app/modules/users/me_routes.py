@@ -19,6 +19,9 @@ router = APIRouter(
 MOUNT_SCRIPT_PATH = Path(__file__).resolve().parents[2] / "mount_script" / "mount-share.py"
 
 
+public_router = APIRouter(prefix="/users/me", tags=["self-service"])
+
+
 @router.get("/shares", response_model=list[ShareOutMe])
 async def my_shares(
     current: User = Depends(get_current_user),
@@ -46,7 +49,7 @@ async def change_my_password(
     await services.change_password(session, current.id, body.new_password)
 
 
-@router.get("/mount-script/download")
+@public_router.get("/mount-script/download")
 async def download_mount_script() -> FileResponse:
     if not MOUNT_SCRIPT_PATH.exists():
         raise HTTPException(status_code=404, detail="Mount script not found")

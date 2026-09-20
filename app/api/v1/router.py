@@ -13,6 +13,7 @@ from app.modules.groups.services import sweep_expired_memberships
 from app.modules.samba.sync_engine import SyncReport, registry_state, sync
 from app.modules.shares.routes import router as shares_router
 from app.modules.stats.routes import router as stats_router
+from app.modules.users.me_routes import public_router as me_public_router
 from app.modules.users.me_routes import router as me_router
 from app.modules.users.routes import router as users_router
 
@@ -76,6 +77,7 @@ async def get_registry_state() -> dict[str, dict[str, str]]:
 
 api_router.include_router(auth_router)
 api_router.include_router(me_router)
+api_router.include_router(me_public_router)
 api_router.include_router(users_router)
 api_router.include_router(groups_router)
 api_router.include_router(shares_router)
