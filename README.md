@@ -22,47 +22,31 @@ Nothing needs to be installed on the host — only Docker.
 - **Mount script** — an endpoint returns ready-to-use mount commands
   (Windows `net use` / Linux `mount -t cifs`) for a specific user.
 
-## Self-Service & CLI
+## Self-Service
 
 ### Веб-интерфейс
-- `/` — «Мои шары»: список доступных шар, кнопки скачивания CLI, ручное подключение.
+- `/` — «Мои шары»: список доступных шар, кнопка скачивания скрипта mount-share.py, ручное подключение.
 - `/profile` — профиль, смена пароля.
 - `/admin` — панель администратора (только для admin-учётных записей).
 
-### CLI `nasmanager`
-Python-пакет с TUI (Textual), собирается в автономный бинарь через Nuitka.
+### CLI `nasmount` (mount-share.py)
+Однострочный кросс-платформенный скрипт для монтирования шар этого сервера.
+Только Python 3 (stdlib), без зависимостей; работает на Linux, macOS и Windows.
 
-**Установка:**
-- Скачайте бинарь со страницы «Мои шары» в web-интерфейсе.
-- Linux: `chmod +x nasmanager-linux-x86_64 && ./nasmanager-linux-x86_64`
-- Windows: запустите `nasmanager-windows-x86_64.exe`
+Файл `app/mount_script/mount-share.py` скачивается со страницы «Мои шары»
+кнопкой «Download script».
 
-**Команды TUI:**
-| Клавиша | Действие |
-|---|---|
-| `m` | Mount выбранной шары |
-| `M` | Mount всех новых шар |
-| `u` | Umount выбранной шары |
-| `U` | Umount всех отозванных шар |
-| `p` | Dry-run preview |
-| `s` | Sync (обновить список шар) |
-| `q` | Выход |
-
-**Сборка из исходников:**
+**Быстрый старт:**
 ```bash
-just cli-build-linux   # Linux
-# Windows: cli/build_windows.ps1
+python3 mount-share.py auth      # вход; токены хранятся в ~/.config/nasmanager/config.json
+python3 mount-share.py mount     # смонтировать все шары (sudo на Linux/macOS)
+python3 mount-share.py umount    # отмонтировать шары этого NAS
+python3 mount-share.py status    # шары с сервера + статус монтирования
+python3 mount-share.py config    # показать конфиг; задать --root PATH / --url URL
 ```
 
-**Запуск из исходников (без сборки бинаря):**
-```bash
-just cli-run
-```
-
-**Тесты CLI:**
-```bash
-just cli-test
-```
+`mount` и `umount` принимают имена шар, например `python3 mount-share.py mount photos`.
+Подключение к серверу по умолчанию: `http://nas:8000` (изменить командой `config --url`).
 
 ## Running
 
