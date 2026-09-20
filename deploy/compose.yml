@@ -15,7 +15,6 @@ services:
       - ${SHARE_HOST_PATH}:${SHARE_MOUNT_PATH}
       - ./data:/data
       - /data/samba-state:/var/lib/samba
-      - ../cli/dist:/app/cli-dist:ro
     ports:
       # Web UI / API. Not used for mounting shares.
       - "${APP_PORT:-8000}:8000"
