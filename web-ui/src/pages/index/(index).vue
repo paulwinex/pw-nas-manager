@@ -1,10 +1,10 @@
 <template>
   <q-page class="q-pa-md1">
-<!--    <div class="text-h5 q-mb-md">Мои шары</div>-->
+<!--    <div class="text-h5 q-mb-md">My shares</div>-->
 
-    <div v-if="loading" class="text-grey">Загрузка…</div>
+    <div v-if="loading" class="text-grey">Loading…</div>
     <div v-else-if="error" class="text-negative q-mb-md">
-      Ошибка загрузки. <q-btn flat dense label="Повторить" @click="load" />
+      Load error. <q-btn flat dense label="Retry" @click="load" />
     </div>
 
     <template v-else>
@@ -48,7 +48,7 @@
         </q-tab-panel>
 
         <q-tab-panel name="scripts">
-          <!-- Скрипт mount -->
+          <!-- Mount script -->
           <q-card flat bordered class="q-mb-lg">
             <q-card-section>
               <div class="text-h6">Mount Script</div>
@@ -83,10 +83,10 @@ python3 mount-share.py config    # show config / set --root PATH or --url URL</c
             </q-card-actions>
           </q-card>
 
-          <!-- Ручное подключение -->
+          <!-- Manual connection -->
           <q-card flat bordered>
             <q-card-section>
-              <div class="text-h6">Manually conenction</div>
+              <div class="text-h6">Manual connection</div>
             </q-card-section>
             <q-separator inset />
             <q-card-section>
@@ -107,7 +107,7 @@ python3 mount-share.py config    # show config / set --root PATH or --url URL</c
                     flat
                     dense
                     icon="content_copy"
-                    label="Копировать"
+                    label="Copy"
                     class="q-mt-sm"
                     @click="copyToClipboard(mountScript.linux_script)"
                   />

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h5 q-mb-md">Профиль</div>
+    <div class="text-h5 q-mb-md">Profile</div>
 
     <q-card class="q-mb-md" flat bordered>
       <q-card-section>
@@ -9,7 +9,7 @@
           <div>
             <div class="text-h6 q-ml-sm">{{ auth.username }}</div>
             <div class="text-caption text-grey q-ml-sm">
-              {{ auth.isAdmin ? 'Администратор' : 'Пользователь' }}
+              {{ auth.isAdmin ? 'Administrator' : 'User' }}
             </div>
           </div>
         </div>
@@ -18,16 +18,16 @@
 
     <q-card class="q-mb-md" flat bordered>
       <q-card-section>
-        <div class="text-subtitle1">Оформление</div>
+        <div class="text-subtitle1">Appearance</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        <q-toggle :model-value="$q.dark.isActive" label="Тёмная тема" @update:model-value="(v: boolean) => toggleDark(v)" />
+        <q-toggle :model-value="$q.dark.isActive" label="Dark theme" @update:model-value="(v: boolean) => toggleDark(v)" />
       </q-card-section>
     </q-card>
 
     <q-card flat bordered>
       <q-card-section>
-        <div class="text-subtitle1">Смена пароля</div>
+        <div class="text-subtitle1">Change password</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
         <q-form @submit="changePassword">
@@ -36,7 +36,7 @@
               <q-input
                 v-model="pwd.new"
                 dense
-                label="Новый пароль"
+                label="New password"
                 type="password"
                 outlined
                 @update:model-value="pwd.error = ''"
@@ -46,7 +46,7 @@
               <q-input
                 v-model="pwd.confirm"
                 dense
-                label="Подтверждение"
+                label="Confirmation"
                 type="password"
                 outlined
                 :error="!!pwd.error"
@@ -56,8 +56,8 @@
             </div>
           </div>
           <div class="row items-center q-mt-md">
-            <q-btn label="Сменить пароль" type="submit" color="primary" :loading="saving" />
-            <q-btn flat label="Выйти" class="q-ml-sm" @click="logout" />
+            <q-btn label="Change password" type="submit" color="primary" :loading="saving" />
+            <q-btn flat label="Log out" class="q-ml-sm" @click="logout" />
           </div>
         </q-form>
       </q-card-section>
@@ -91,21 +91,21 @@ function logout() {
 async function changePassword() {
   pwd.value.error = '';
   if (!pwd.value.new) {
-    pwd.value.error = 'Введите новый пароль';
+    pwd.value.error = 'Enter a new password';
     return;
   }
   if (pwd.value.new !== pwd.value.confirm) {
-    pwd.value.error = 'Пароли не совпадают';
+    pwd.value.error = 'Passwords do not match';
     return;
   }
   saving.value = true;
   try {
     await api.changeMyPassword(pwd.value.new);
-    $q.notify({ type: 'positive', message: 'Пароль изменён. Перелогиньтесь.' });
+    $q.notify({ type: 'positive', message: 'Password changed. Please log in again.' });
     pwd.value.new = '';
     pwd.value.confirm = '';
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Не удалось сменить пароль' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to change password' });
   } finally {
     saving.value = false;
   }
