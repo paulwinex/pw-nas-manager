@@ -71,7 +71,7 @@ def test_admin_endpoints_403_for_non_admin(client, auth, fake_runner):
 
 def test_mount_script_download(client, auth, fake_runner):
     """/users/me/mount-script/download доступен без авторизации как текст."""
-    resp = client.get("/api/v1/users/me/mount-script/download")
+    resp = client.get("/api/v1/users/me/mount-script/download/mount-share.py")
     assert resp.status_code == 200
     assert resp.content.startswith(b"#!/usr/bin/env python3")
     assert "nasmount" in resp.text

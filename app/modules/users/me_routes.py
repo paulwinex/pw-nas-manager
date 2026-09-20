@@ -49,13 +49,13 @@ async def change_my_password(
     await services.change_password(session, current.id, body.new_password)
 
 
-@public_router.get("/mount-script/download")
-async def download_mount_script() -> FileResponse:
+@public_router.get("/mount-script/download/{filename}")
+async def download_mount_script(filename: str) -> FileResponse:
     if not MOUNT_SCRIPT_PATH.exists():
         raise HTTPException(status_code=404, detail="Mount script not found")
     return FileResponse(
         MOUNT_SCRIPT_PATH,
-        filename="mount-share.py",
+        filename=filename,
         media_type="text/plain; charset=utf-8",
         content_disposition_type="inline",
     )
