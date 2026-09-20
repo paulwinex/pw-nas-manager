@@ -69,33 +69,11 @@ def test_admin_endpoints_403_for_non_admin(client, auth, fake_runner):
     assert resp.status_code == 403
 
 
-def test_cli_endpoint_404_if_no_binary(client, auth, fake_runner, tmp_path, monkeypatch):
-    """Без собранного бинаря /users/me/cli отдаёт 404."""
-    from app.core.settings import get_settings
-
-    monkeypatch.setattr(get_settings(), "cli_dist_dir", tmp_path)
+def test_mount_script_download(client, auth, fake_runner):
+    """/users/me/mount-script/download отдаёт файл mount-share.py."""
     token = _login_user(client, auth)
-    resp = client.get("/api/v1/users/me/cli?os=linux", headers=_auth(token))
-    assert resp.status_code == 404
-
-
-def test_cli_endpoint_serves_binary(client, auth, fake_runner, tmp_path, monkeypatch):
-    """При наличии бинаря /users/me/cli отдаёт файл."""
-    from app.core.settings import get_settings
-
-    (tmp_path / "nasmanager-linux-x86_64").write_bytes(b"fake-binary")
-    monkeypatch.setattr(get_settings(), "cli_dist_dir", tmp_path)
-    token = _login_user(client, auth)
-    resp = client.get("/api/v1/users/me/cli?os=linux", headers=_auth(token))
+    resp = client.get("/api/v1/users/me/mount-script/download", headers=_auth(token))
     assert resp.status_code == 200
-    assert resp.content == b"fake-binary"
-
-
-def test_cli_endpoint_bad_os(client, auth, fake_runner, tmp_path, monkeypatch):
-    """Неизвестная ОС в query параметре отдаёт 400."""
-    from app.core.settings import get_settings
-
-    monkeypatch.setattr(get_settings(), "cli_dist_dir", tmp_path)
-    token = _login_user(client, auth)
-    resp = client.get("/api/v1/users/me/cli?os=macos", headers=_auth(token))
-    assert resp.status_code == 400
+    assert resp.content.startswith(b"#!/usr/bin/env python3")
+    assert "nasmount" in resp.text
+    assert "mount-share.py" in resp.headers.get("content-disposition", "")
