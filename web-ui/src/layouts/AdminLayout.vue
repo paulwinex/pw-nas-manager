@@ -12,8 +12,9 @@
             aria-label="Menu"
             @click="drawerOpen = true"
           />
-          <q-toolbar-title class="cursor-pointer" @click="router.push('/')">
-            NAS Manager
+          <q-toolbar-title class="cursor-pointer q-gutter-x-sm row items-center" @click="router.push('/')">
+            <img src="/icons/favicon-128x128.png" alt="Share Manager" class="app-icon" />
+            <div>Share Manager</div>
           </q-toolbar-title>
           <UserMenu />
         </q-toolbar>
@@ -65,3 +66,10 @@ watch(
   },
 );
 </script>
+
+<style scoped>
+.app-icon {
+  width: 26px;
+  height: 26px;
+}
+</style>

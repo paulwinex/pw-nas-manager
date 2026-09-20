@@ -3,8 +3,9 @@
     <q-header class="bg-primary text-white">
       <div class="page-box">
         <q-toolbar>
-          <q-toolbar-title class="cursor-pointer" @click="router.push('/')">
-            NAS Manager
+          <q-toolbar-title class="cursor-pointer q-gutter-x-sm row items-center" @click="router.push('/')">
+            <img src="/icons/favicon-128x128.png" alt="Share Manager" class="app-icon" />
+            <div>Share Manager</div>
           </q-toolbar-title>
           <UserMenu />
         </q-toolbar>
@@ -27,3 +28,10 @@ import UserMenu from '@/components/layout/UserMenu.vue';
 
 const router = useRouter();
 </script>
+
+<style scoped>
+.app-icon {
+  width: 26px;
+  height: 26px;
+}
+</style>

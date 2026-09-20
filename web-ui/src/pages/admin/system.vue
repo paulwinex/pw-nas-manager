@@ -1,6 +1,6 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="text-h5 q-mb-md">System</div>
+  <q-page class="q-px-md">
+<!--    <div class="text-h5 q-mb-md">System</div>-->
 
     <div class="dash-grid">
       <q-card flat bordered class="dash-card-half">

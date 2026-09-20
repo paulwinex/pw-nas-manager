@@ -110,7 +110,7 @@
               </q-icon>
             </template>
           </q-input>
-          <div class="col-12 q-mt-sm row items-center q-col-gutter-sm">
+          <div class="col-12 q-mt-sm row items-center1 q-col-gutter-sm1">
             <q-btn
               :label="editingKey ? 'Save' : 'Add'"
               color="primary"

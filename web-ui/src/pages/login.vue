@@ -4,13 +4,13 @@
       <q-page class="flex flex-center">
         <q-card class="login-card" bordered flat>
           <q-card-section class="text-center q-pt-lg q-pb-sm">
-            <q-icon name="folder_shared" size="52px" color="primary" />
-            <div class="text-h5 q-mt-sm">NAS Manager</div>
+            <img src="/icons/favicon-128x128.png" alt="Share Manager" class="login-icon" />
+            <div class="text-h5 q-mt-sm">Share Manager</div>
             <div class="text-caption text-grey">Sign in to continue</div>
           </q-card-section>
 
           <q-card-section class="q-pt-none">
-            <q-form @submit="onSubmit" class="q-gutter-sm">
+            <q-form @submit="onSubmit" class="q-gutter-y-sm">
               <q-input
                 v-model="username"
                 label="Username"
@@ -45,7 +45,7 @@
                 color="primary"
                 unelevated
                 no-caps
-                class="full-width q-mt-sm"
+                class="full-width q-mt-sm sign-in-btn"
                 :loading="loading"
               />
             </q-form>
@@ -103,5 +103,14 @@ async function onSubmit() {
 .login-card {
   width: 100%;
   max-width: 380px;
+}
+
+.login-icon {
+  width: 52px;
+  height: 52px;
+}
+
+.sign-in-btn {
+  height: 40px;
 }
 </style>

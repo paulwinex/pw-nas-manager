@@ -1,4 +1,4 @@
-# NAS Manager UI
+# Share Manager
 
 ## Install the dependencies
 

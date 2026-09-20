@@ -1,9 +1,9 @@
 {
-  "name": "simple-share-ui",
+  "name": "share-manager",
   "version": "0.0.1",
-  "description": "A Quasar Project",
-  "productName": "NAS Manager",
-  "author": "NAS Dev <paulwinex@gmail.com>",
+  "description": "Simple share manager for NAS",
+  "productName": "Share Manager",
+  "author": "<paulwinex@gmail.com>",
   "type": "module",
   "private": true,
   "scripts": {

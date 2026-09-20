@@ -3,14 +3,31 @@
     :model-value="modelValue"
     @update:model-value="(v: boolean) => emits('update:modelValue', v)"
   >
-    <q-card style="min-width: 560px; max-width: 90vw">
+    <q-card
+      style="min-width: 560px; max-width: 90vw; max-height: 90vh"
+      class="column no-wrap"
+    >
       <q-card-section>
         <div class="text-subtitle1">Shares of {{ group?.name }}</div>
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section class="q-py-sm">
+        <q-input
+          v-model="filter"
+          dense
+          clearable
+          debounce="150"
+          placeholder="Filter by name or path"
+        >
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </q-card-section>
+
+      <q-card-section class="col scroll">
         <q-table
-          :rows="shares"
+          :rows="filteredShares"
           :columns="columns"
           row-key="id"
           flat
@@ -24,47 +41,24 @@
               <div class="text-caption text-grey">{{ cell.row.path }}</div>
             </q-td>
           </template>
-          <template v-slot:body-cell-actions="cell">
+          <template v-slot:body-cell-linked="cell">
             <q-td :props="cell" class="text-right">
-              <q-btn
-                flat
-                dense
-                round
-                icon="link_off"
-                color="negative"
-                title="Unlink"
-                @click="unlink(cell.row)"
-              />
+              <div class="row items-center no-wrap justify-end">
+                <q-spinner
+                  v-if="pending.has(cell.row.id)"
+                  size="xs"
+                  color="primary"
+                  class="q-mr-sm"
+                />
+                <q-toggle
+                  :model-value="linkedIds.has(cell.row.id)"
+                  :disable="pending.has(cell.row.id)"
+                  @update:model-value="toggle(cell.row)"
+                />
+              </div>
             </q-td>
           </template>
         </q-table>
-      </q-card-section>
-
-      <q-card-section>
-        <div class="text-subtitle2 q-mb-sm">Link share</div>
-        <div class="row q-col-gutter-sm items-end">
-          <q-select
-            class="col-8"
-            v-model="form.share_id"
-            :options="availableShares"
-            option-label="name"
-            option-value="id"
-            emit-value
-            map-options
-            label="Share"
-            outlined
-            dense
-          />
-          <div class="col-4">
-            <q-btn
-              label="Link"
-              color="primary"
-              :loading="linking"
-              :disable="!form.share_id"
-              @click="link"
-            />
-          </div>
-        </div>
       </q-card-section>
 
       <q-card-actions align="right">
@@ -84,31 +78,37 @@ const props = defineProps<{ modelValue: boolean; group: GroupOut | null }>();
 const emits = defineEmits<{ (e: 'update:modelValue', v: boolean): void }>();
 
 const $q = useQuasar();
-const shares = ref<ShareOut[]>([]);
 const allShares = ref<ShareOut[]>([]);
+const linked = ref<ShareOut[]>([]);
+const filter = ref('');
+const pending = ref(new Set<string>());
 const loading = ref(false);
-const linking = ref(false);
-const form = ref<{ share_id: string | null }>({ share_id: null });
 
 const columns = [
-  { name: 'name', label: 'Share', field: 'name', align: 'left' as const },
-  { name: 'actions', label: '', field: '', align: 'right' as const },
+  { name: 'name', label: 'Share', field: 'name', align: 'left' as const, sortable: true },
+  { name: 'linked', label: '', field: '', align: 'right' as const },
 ];
 
-const availableShares = computed(() =>
-  allShares.value.filter((s) => !shares.value.some((x) => x.id === s.id))
-);
+const linkedIds = computed(() => new Set(linked.value.map((s) => s.id)));
+
+const filteredShares = computed(() => {
+  const q = filter.value.trim().toLowerCase();
+  if (!q) return allShares.value;
+  return allShares.value.filter(
+    (s) => s.name.toLowerCase().includes(q) || s.path.toLowerCase().includes(q)
+  );
+});
 
 async function load() {
   if (!props.group) return;
   loading.value = true;
   try {
-    const [all, linked] = await Promise.all([
+    const [all, groupShares] = await Promise.all([
       api.listShares(),
       api.listGroupShares(props.group.id),
     ]);
     allShares.value = all.data;
-    shares.value = linked.data;
+    linked.value = groupShares.data;
   } catch (e: any) {
     $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to load shares' });
   } finally {
@@ -116,30 +116,28 @@ async function load() {
   }
 }
 
-async function link() {
-  if (!props.group || !form.value.share_id) return;
-  linking.value = true;
+async function toggle(share: ShareOut) {
+  if (!props.group || pending.value.has(share.id)) return;
+  const isLinkedNow = linkedIds.value.has(share.id);
+  pending.value.add(share.id);
   try {
-    await api.linkShare(props.group.id, form.value.share_id);
-    form.value.share_id = null;
-    $q.notify({ type: 'positive', message: 'Share linked' });
+    if (isLinkedNow) {
+      await api.unlinkShare(props.group.id, share.id);
+      linked.value = linked.value.filter((s) => s.id !== share.id);
+      $q.notify({ type: 'positive', message: 'Share unlinked' });
+    } else {
+      await api.linkShare(props.group.id, share.id);
+      linked.value.push(share);
+      $q.notify({ type: 'positive', message: 'Share linked' });
+    }
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to link share' });
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.detail ?? (isLinkedNow ? 'Failed to unlink share' : 'Failed to link share'),
+    });
   } finally {
-    linking.value = false;
+    pending.value.delete(share.id);
   }
-  await load();
-}
-
-async function unlink(share: ShareOut) {
-  if (!props.group) return;
-  try {
-    await api.unlinkShare(props.group.id, share.id);
-    $q.notify({ type: 'positive', message: 'Share unlinked' });
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.detail ?? 'Failed to unlink share' });
-  }
-  await load();
 }
 
 watch(

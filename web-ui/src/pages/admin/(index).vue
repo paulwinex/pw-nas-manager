@@ -1,8 +1,8 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5">Dashboard</div>
-      <q-btn flat round icon="refresh" @click="load" :loading="loading" />
+  <q-page class="q-px-md">
+    <div class="row items-center justify-between q-mb-md1">
+<!--      <div class="text-h5">Dashboard</div>-->
+<!--      <q-btn flat round icon="refresh" @click="load" :loading="loading" />-->
     </div>
 
     <div v-if="failed" class="text-negative row items-center q-gutter-sm q-mb-md">
@@ -24,15 +24,13 @@
         </q-card>
       </div>
 
-      <q-card flat bordered class="q-mt-md">
+      <q-card flat bordered class="q-mt-md"
+      v-if="stats.expiring_memberships.length !== 0">
         <q-card-section>
           <div class="text-h6">Expiring memberships (next 7 days)</div>
         </q-card-section>
         <q-separator inset />
-        <q-card-section v-if="stats.expiring_memberships.length === 0" class="q-pt-none text-grey">
-          None
-        </q-card-section>
-        <q-markup-table v-else>
+        <q-markup-table>
           <thead>
             <tr>
               <th class="text-left">User</th>

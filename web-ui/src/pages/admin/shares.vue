@@ -1,19 +1,18 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5">Shares</div>
-      <q-btn label="Create share" icon="add" color="primary" @click="openCreate" />
-    </div>
+  <q-page class="q-px-md">
+<!--    <div class="text-h5 q-mb-md">Shares</div>-->
 
-    <q-input
-      v-model="nameFilter"
-      label="Filter by name"
-      clearable
-      dense
-      debounce="200"
-      class="q-mb-md"
-      style="max-width: 300px"
-    />
+    <div class="row items-center justify-between q-mb-md">
+      <q-input
+        v-model="nameFilter"
+        label="Filter by name"
+        clearable
+        dense
+        debounce="200"
+        style="max-width: 300px"
+      />
+      <q-btn flat round icon="add" color="primary" title="Create share" @click="openCreate" />
+    </div>
 
     <q-table
       :rows="filteredShares"

@@ -1,22 +1,21 @@
 <template>
-  <q-page class="q-pa-md">
+  <q-page class="q-px-md">
+<!--    <div class="text-h5 q-mb-md">Groups</div>-->
+
     <div class="row items-center justify-between q-mb-md">
-      <div class="text-h5">Groups</div>
+      <q-input
+        v-model="nameFilter"
+        label="Filter by name"
+        clearable
+        dense
+        debounce="200"
+        style="max-width: 300px"
+      />
       <div class="row items-center q-gutter-sm">
         <q-checkbox v-model="showPersonal" label="Show personal" dense />
-        <q-btn label="Create group" icon="add" color="primary" @click="createOpen = true" />
+        <q-btn flat round icon="add" color="primary" title="Create group" @click="createOpen = true" />
       </div>
     </div>
-
-    <q-input
-      v-model="nameFilter"
-      label="Filter by name"
-      clearable
-      dense
-      debounce="200"
-      class="q-mb-md"
-      style="max-width: 300px"
-    />
 
     <q-table
       :rows="filteredGroups"
