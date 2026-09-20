@@ -78,7 +78,7 @@ export const api = {
   meMountScript: () => client.get<MountScriptResponse>('/api/v1/users/me/mount-script'),
   changeMyPassword: (newPassword: string) =>
     client.post<void>('/api/v1/users/me/password', { new_password: newPassword }),
-  cliUrl: (os: string) => `/api/v1/users/me/cli?os=${os}`,
+  mountScriptUrl: '/api/v1/users/me/mount-script/download',
   refresh: (refreshToken: string) =>
     client.post<LoginResponse>('/api/v1/auth/refresh', { refresh_token: refreshToken }),
 };

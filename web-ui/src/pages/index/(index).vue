@@ -48,26 +48,39 @@
         </q-tab-panel>
 
         <q-tab-panel name="scripts">
-          <!-- Скачать CLI -->
+          <!-- Скрипт mount -->
           <q-card flat bordered class="q-mb-lg">
             <q-card-section>
               <div class="text-h6">Mount Script</div>
             </q-card-section>
             <q-separator inset />
-            <q-card-section class="row q-gutter-sm">
-              <q-btn
-                color="primary"
-                icon="download"
-                label="Linux"
-                :href="`/api/v1/users/me/cli?os=linux`"
-              />
-              <q-btn
-                color="primary"
-                icon="download"
-                label="Windows"
-                :href="`/api/v1/users/me/cli?os=windows`"
-              />
+            <q-card-section class="q-gutter-y-sm">
+              <p class="q-mb-none">
+                <code>nasmount</code> is a single-file cross-platform helper that mounts your
+                shared paths. It needs only Python 3, has no dependencies, and works on Linux,
+                macOS and Windows. Tokens and settings are stored in
+                <code>~/.config/nasmanager/config.json</code>.
+              </p>
+              <pre class="usage-pre"><code># Quick start
+python3 mount-share.py auth      # log in, store tokens
+python3 mount-share.py mount     # mount all shares (sudo on Linux/macOS)
+python3 mount-share.py umount    # unmount shares from this NAS
+python3 mount-share.py status    # list shares with mount status
+python3 mount-share.py config    # show config / set --root PATH or --url URL</code></pre>
+              <p class="text-caption text-grey q-mb-none">
+                <code>mount</code> and <code>umount</code> accept share names, e.g.
+                <code>mount-share.py mount photos</code>.
+              </p>
             </q-card-section>
+            <q-card-actions align="right">
+              <q-btn
+                color="primary"
+                icon="download"
+                label="Download script"
+                :href="api.mountScriptUrl"
+                download="mount-share.py"
+              />
+            </q-card-actions>
           </q-card>
 
           <!-- Ручное подключение -->
@@ -167,3 +180,15 @@ async function load() {
 
 onMounted(load);
 </script>
+
+<style scoped>
+.usage-pre {
+  margin: 0;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+</style>
