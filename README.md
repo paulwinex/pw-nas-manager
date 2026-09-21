@@ -38,12 +38,38 @@ page with the "Download script" button.
 
 **Quick start:**
 ```bash
+python3 mount-share.py setup     # interactive wizard: configure, log in, and mount
 python3 mount-share.py auth      # log in; tokens stored in ~/.config/nasmanager/config.json
 python3 mount-share.py mount     # mount all shares (sudo on Linux/macOS)
 python3 mount-share.py umount    # unmount shares from this NAS
 python3 mount-share.py status    # shares from server + mount status
 python3 mount-share.py config    # show config; set --root PATH / --url URL
 ```
+
+The `setup` command is an all-in-one wizard. It asks, in order, for the server URL,
+username and password, logs in, prompts for the default mount root, then lists the
+available shares and offers to mount them all:
+
+```text
+$ python3 mount-share.py setup
+Server URL (default http://nas:8000): http://nas:8000
+Username: alice
+Password:
+Mount root path (default /mnt/nas): /mnt/nas
+Available shares:
+Share                    Access   Host
+------------------------------------------------------------
+photos                   rw       nas:445
+temp                     ro       nas:445
+------------------------------------------------------------
+Mount all 2 shares? [Y/n]: y
+Password for alice@nas:
+mounted photos -> /mnt/nas/photos
+mounted temp -> /mnt/nas/temp
+```
+
+Answer `n` (or anything other than `y`/`yes`/empty) at the final prompt to save the
+configuration without mounting anything.
 
 `mount` and `umount` accept share names, e.g. `python3 mount-share.py mount photos`.
 Default server address: `http://nas:8000` (change with the `config --url` command).

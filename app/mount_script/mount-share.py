@@ -5,6 +5,7 @@ Stdlib only, no dependencies. Works on Linux, macOS and Windows.
 
 Commands:
   auth, a      - log in and store tokens locally
+  setup        - interactive wizard: configure, log in, and mount shares
   mount, m     - mount shares (names optional; --root PATH overrides the mount root)
   umount, u    - unmount mounts made to this NAS (names optional)
   status, s    - list shares on the server with mounted markers
@@ -489,6 +490,97 @@ def cmd_auth(cfg: Config, args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_setup(cfg: Config, args: argparse.Namespace) -> int:
+    url_default = cfg.server_url or DEFAULT_URL
+    url = _input(f"Server URL (default {url_default}): ").strip() or url_default
+    url = url.rstrip("/")
+
+    if cfg.username:
+        username = _input(f"Username (default {cfg.username}): ").strip() or cfg.username
+    else:
+        username = _input("Username: ").strip()
+    if not username:
+        print("Username required")
+        return 1
+
+    password = _getpass("Password: ")
+    try:
+        tokens = ApiClient(url).login(username, password)
+    except ApiError as e:
+        print(f"Login failed: {e}")
+        return 1
+
+    cfg.server_url = url
+    cfg.username = username
+    cfg.access_token = tokens["access_token"]
+    cfg.refresh_token = tokens["refresh_token"]
+
+    root_default = cfg.mount_root or DEFAULT_ROOT
+    root = _input(f"Mount root path (default {root_default}): ").strip() or root_default
+    cfg.mount_root = root
+    save_config(cfg)
+
+    try:
+        shares = ApiClient(cfg.server_url).list_shares(cfg.access_token)
+    except ApiError as e:
+        print(f"API error: {e}")
+        return 1
+
+    if not shares:
+        print("No shares available")
+        return 0
+
+    print("Available shares:")
+    print(f"{'Share':<24} {'Access':<8} Host")
+    print('-' * 60)
+    for share in sorted(shares, key=lambda s: s["name"]):
+        name, host, port, access = share["name"], share["host"], share["port"], share["access"]
+        print(f"{name:<24} {access:<8} {host}:{port}")
+    print('-' * 60)
+
+    answer = _input(f"Mount all {len(shares)} shares? [Y/n]: ").strip().lower()
+    if answer not in ("", "y", "yes"):
+        print("Skipped mounting")
+        return 0
+
+    return 1 if _mount_shares(cfg, shares, root) else 0
+
+
+def _mount_shares(cfg: Config, shares: list[dict], root: str) -> int:
+    """Mount the given shares under root. Returns the number of failures."""
+    if not shares:
+        print("No shares available")
+        return 0
+
+    nas_host = shares[0].get("host") or host_from_url(cfg.server_url)
+    smb_password = _ask_smb_password(cfg.username, nas_host)
+
+    if not sys.platform.startswith("win"):
+        ok, msg = ensure_dir(root)
+        if not ok:
+            print(f"Could not create mount root {root}: {msg}")
+            return 1
+
+    errors = 0
+    for share in sorted(shares, key=lambda s: s["name"]):
+        name, host, port = share["name"], share["host"], share["port"]
+        cmd, target, needs_sudo = mount_plan(host, name, port, cfg.username, root, smb_password)
+        if needs_sudo:
+            ok, msg = ensure_dir(target)
+            if not ok:
+                errors += 1
+                print(f"error mounting {name}: {msg}")
+                continue
+        ok, msg = run_cmd(cmd)
+        if ok:
+            add_mount(name, share_source(host, name), target)
+            print(f"mounted {name} -> {target}")
+        else:
+            errors += 1
+            print(f"error mounting {name}: {msg}")
+    return errors
+
+
 def cmd_mount(cfg: Config, args: argparse.Namespace) -> int:
     root_arg = getattr(args, "root", None)
     if root_arg:
@@ -535,33 +627,7 @@ def cmd_mount(cfg: Config, args: argparse.Namespace) -> int:
         print("No shares available")
         return 0
 
-    nas_host = shares[0].get("host") or host_from_url(cfg.server_url)
-    smb_password = _ask_smb_password(cfg.username, nas_host)
-
-    if not sys.platform.startswith("win"):
-        ok, msg = ensure_dir(root)
-        if not ok:
-            print(f"Could not create mount root {root}: {msg}")
-            return 1
-
-    errors = []
-    for share in sorted(shares, key=lambda s: s["name"]):
-        name, host, port = share["name"], share["host"], share["port"]
-        cmd, target, needs_sudo = mount_plan(host, name, port, cfg.username, root, smb_password)
-        if needs_sudo:
-            ok, msg = ensure_dir(target)
-            if not ok:
-                errors.append(f"{name}: {msg}")
-                print(f"error mounting {name}: {msg}")
-                continue
-        ok, msg = run_cmd(cmd)
-        if ok:
-            add_mount(name, share_source(host, name), target)
-            print(f"mounted {name} -> {target}")
-        else:
-            errors.append(f"{name}: {msg}")
-            print(f"error mounting {name}: {msg}")
-
+    errors = _mount_shares(cfg, shares, root)
     return 1 if (errors or not_found) else 0
 
 
@@ -670,6 +736,9 @@ def parse_args(argv=None) -> argparse.Namespace:
 
     pa = sub.add_parser("auth", aliases=["a"], help="log in and store tokens")
     pa.set_defaults(func=cmd_auth)
+
+    pset = sub.add_parser("setup", help="interactive wizard: configure, log in, and mount")
+    pset.set_defaults(func=cmd_setup)
 
     pm = sub.add_parser("mount", aliases=["m"], help="mount shares")
     pm.add_argument("--root", metavar="PATH", help="mount root directory (else config or prompt)")
